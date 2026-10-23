@@ -1,0 +1,5966 @@
+﻿============================================================
+QSL CORE ARCHITECTURE AUDIT
+============================================================
+
+ROOT: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL
+FILES: 83
+
+CERTIFIED ARCHITECTURE - DO NOT REOPEN WITHOUT A REGRESSION:
+
+  - Provenance architecture
+  - SubjectId identity
+  - SubjectSlug heritage snapshots
+  - Object-owned provenance
+  - QslProvenanceBus.Publish entry retention and indexing
+  - Global QslRuntime.Instance integration surface
+  - Runtime Errors channel removal
+  - QslParser.Errors as intentional parser diagnostics
+  - Registry modernization
+  - Typed QslNodeKind evaluator dispatch
+  - Hardcoded RegisterDefaultOperators removal
+  - QslEngine external API boundary
+  - QslParseResult and QslProcessingResult
+  - Assignment metadata and evaluator dispatch
+  - Arrow metadata and ordered left-then-right evaluation
+  - Current stable Unity driver integration
+
+AUDIT GOALS:
+
+  - AST modernization and consistency
+  - Legacy and dead operator wrapper detection
+  - Namespace normalization
+  - Unity and netstandard2.1 compatibility
+  - Metadata-driven dispatch consistency
+  - Assignment and Arrow execution verification
+  - Silent failure detection
+  - Duplicate execution-path detection
+  - Dead or unreachable runtime path detection
+  - Missing evaluator or executor detection
+  - Metadata gaps or conflicting metadata detection
+
+REVIEW CONTRACT:
+
+  STATUS: CORRECT
+  or
+  STATUS: UPDATE REQUIRED
+  followed by the complete updated file.
+
+  Certified architecture listed above is not to be
+  redesigned unless the current source demonstrates
+  an actual regression or implementation conflict.
+
+============================================================
+FILE INDEX
+============================================================
+
+001  Abstractions\Contracts\IContextBase.cs
+002  Abstractions\Contracts\IQslBlock.cs
+003  Abstractions\Contracts\IQslBlockFactory.cs
+004  Abstractions\Contracts\IQslCapability.cs
+005  Abstractions\Contracts\IQslDescriptor.cs
+006  Abstractions\Contracts\IQslEvaluator.cs
+007  Abstractions\Contracts\IQslFunction.cs
+008  Abstractions\Contracts\IQslNode.cs
+009  Abstractions\Contracts\IQSLObject.cs
+010  Abstractions\Contracts\IQslOperator.cs
+011  Abstractions\Contracts\IQslRegistryItem.cs
+012  Abstractions\Contracts\IQslRuntimeObject.cs
+013  Core\AST\QslBinaryNode.cs
+014  Core\AST\QslBlockNode.cs
+015  Core\AST\QslCallNode.cs
+016  Core\AST\QslEmbeddedNode.cs
+017  Core\AST\QslErrorNode.cs
+018  Core\AST\QslIdentifierNode.cs
+019  Core\AST\QslLiteralNode.cs
+020  Core\AST\QslMemberAccessNode.cs
+021  Core\AST\QslNode.cs
+022  Core\AST\QslTernaryNode.cs
+023  Core\AST\QslUnaryNode.cs
+024  Core\AST\Types\QslEvaluationStrategy.cs
+025  Core\AST\Types\QslLiteralKind.cs
+026  Core\AST\Types\QslNodeKind.cs
+027  Core\Base\QslBaseObject.cs
+028  Core\Base\QslRegistryItem.cs
+029  Core\Base\QslRuntimeObject.cs
+030  Core\CompilerShims\IsExternalInit.cs
+031  Core\Custom\Vector.cs
+032  Core\Custom\Velocity.cs
+033  Core\Extensions\QslGuidExtensions.cs
+034  Core\Lexer\QslKindExtensions.cs
+035  Core\Lexer\QslToken.cs
+036  Core\Lexer\QslTokenAttribute.cs
+037  Core\Lexer\QslTokenizer.cs
+038  Core\Lexer\QslTokenKind.cs
+039  Core\Parser\QslParser.cs
+040  Core\Provenance\QslProvenanceBus.cs
+041  Core\Provenance\QslProvenanceEntry.cs
+042  Core\Provenance\QslProvenanceType.cs
+043  Core\Runtime\Capabilities\PhysicsCapability.cs
+044  Core\Runtime\Context\QslContextBase.cs
+045  Core\Runtime\Context\QslRuntimeContext.cs
+046  Core\Runtime\Descriptors\PlayerDescriptor.cs
+047  Core\Runtime\Evaluators\QslBinaryEvaluator.cs
+048  Core\Runtime\Evaluators\QslBlockEvaluator.cs
+049  Core\Runtime\Evaluators\QslCallEvaluator.cs
+050  Core\Runtime\Evaluators\QslEmbeddedEvaluator.cs
+051  Core\Runtime\Evaluators\QslErrorEvaluator.cs
+052  Core\Runtime\Evaluators\QslIdentifierEvaluator.cs
+053  Core\Runtime\Evaluators\QslLiteralEvaluator.cs
+054  Core\Runtime\Evaluators\QslMemberAccessEvaluator.cs
+055  Core\Runtime\Evaluators\QslTernaryEvaluator.cs
+056  Core\Runtime\Evaluators\QslUnaryEvaluator.cs
+057  Core\Runtime\Functions\ApplyForceFunction.cs
+058  Core\Runtime\Functions\DampenVelocityFunction.cs
+059  Core\Runtime\Functions\HealFunction.cs
+060  Core\Runtime\Functions\QslMethodFunction.cs
+061  Core\Runtime\Operators\QslAddOperator.cs
+062  Core\Runtime\Operators\QslAndOperator.cs
+063  Core\Runtime\Operators\QslDivideOperator.cs
+064  Core\Runtime\Operators\QslEqualOperator.cs
+065  Core\Runtime\Operators\QslGreaterEqualOperator.cs
+066  Core\Runtime\Operators\QslGreaterOperator.cs
+067  Core\Runtime\Operators\QslLessEqualOperator.cs
+068  Core\Runtime\Operators\QslLessOperator.cs
+069  Core\Runtime\Operators\QslModuloOperator.cs
+070  Core\Runtime\Operators\QslMultiplyOperator.cs
+071  Core\Runtime\Operators\QslNotEqualOperator.cs
+072  Core\Runtime\Operators\QslNotOperator.cs
+073  Core\Runtime\Operators\QslNullCoalescingOperator.cs
+074  Core\Runtime\Operators\QslOperatorBase.cs
+075  Core\Runtime\Operators\QslOperatorResolver.cs
+076  Core\Runtime\Operators\QslOrOperator.cs
+077  Core\Runtime\Operators\QslSubtractOperator.cs
+078  Core\Runtime\QslRuntime.cs
+079  Core\Runtime\QslRuntimeRegistry.cs
+080  Core\Surface\QslEngine.cs
+081  QSL_Fixup_Backup_20261023_002323\Core\Runtime\Operators\QslDivideOperator.cs
+082  QSL_Fixup_Backup_20261023_002323\Core\Runtime\Operators\QslModuloOperator.cs
+083  QSL_Fixup_Backup_20261023_002323\Core\Runtime\Operators\QslMultiplyOperator.cs
+
+============================================================
+FILE 001: Abstractions\Contracts\IContextBase.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IContextBase.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+
+namespace QSL.Abstractions.Context
+{
+    public interface IContextBase
+    {
+        Guid Id { get; }
+        string Slug { get; }
+
+        IReadOnlyDictionary<string, object> Variables { get; }
+        IReadOnlyDictionary<string, object> Metadata { get; }
+
+        void SetVariable(string key, object value);
+        void SetMetadata(string key, object value);
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 002: Abstractions\Contracts\IQslBlock.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslBlock.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+
+namespace QSL.Abstractions.Runtime
+{
+    public interface IQslBlock : IQslObject
+    {
+        void Execute(QslRuntimeContext context);
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 003: Abstractions\Contracts\IQslBlockFactory.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslBlockFactory.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+
+namespace QSL.Abstractions.Runtime
+{
+    public interface IQslBlockFactory : IQslRegistryItem
+    {
+        IQslBlock Create();
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 004: Abstractions\Contracts\IQslCapability.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslCapability.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+
+namespace QSL.Abstractions.Runtime
+{
+    public interface IQslCapability : IQslRegistryItem
+    {
+        void Apply(QslRuntimeContext context);
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 005: Abstractions\Contracts\IQslDescriptor.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslDescriptor.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+
+namespace QSL.Abstractions.Runtime
+{
+    public interface IQslDescriptor : IQslRegistryItem
+    {
+        void Apply(QslRuntimeContext context);
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 006: Abstractions\Contracts\IQslEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+
+namespace QSL.Abstractions.Base
+{
+    public interface IQslEvaluator : IQslRegistryItem
+    {
+        object? Evaluate(IQslNode node, QslRuntimeContext context);
+    }    
+}
+
+------------------------------------------------------------
+
+============================================================
+FILE 007: Abstractions\Contracts\IQslFunction.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslFunction.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+
+namespace QSL.Abstractions.Runtime
+{
+    public interface IQslFunction : IQslRegistryItem
+    {
+        object? Invoke(object?[] args, QslRuntimeContext context);
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 008: Abstractions\Contracts\IQslNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+using QSL.Core.Ast;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Abstractions.Runtime
+{
+    public interface IQslNode : IQslObject
+    {
+        QslNodeKind Kind { get; }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 009: Abstractions\Contracts\IQSLObject.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQSLObject.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using QSL.Core.Provenance;
+
+namespace QSL.Abstractions.Base
+{
+    // ------------------------------------------------------------
+    // QSL Object (root of everything)
+    // ------------------------------------------------------------
+    public interface IQslObject
+    {
+        Guid Id { get; }
+        string Slug { get; }
+        string Type { get; }
+        IReadOnlyList<QslProvenanceEntry> Provenance { get; }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 010: Abstractions\Contracts\IQslOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+
+namespace QSL.Abstractions.Runtime
+{
+    public interface IQslOperator : IQslRegistryItem
+    {
+        object? ApplyUnary(
+            object? operand,
+            QslRuntimeContext context);
+
+        object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context);
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 011: Abstractions\Contracts\IQslRegistryItem.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslRegistryItem.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+
+namespace QSL.Abstractions.Base
+{
+    public interface IQslRegistryItem : IQslRuntimeObject
+    {
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 012: Abstractions\Contracts\IQslRuntimeObject.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslRuntimeObject.cs
+
+SOURCE:
+------------------------------------------------------------
+namespace QSL.Abstractions.Base
+{
+    public interface IQslRuntimeObject : IQslObject
+    {
+        string Name { get; }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 013: Core\AST\QslBinaryNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslBinaryNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+using QSL.Core.Lexer;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslBinaryNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Binary;
+
+        public QslTokenKind OperatorKind { get; }
+        public IQslNode Left { get; }
+        public IQslNode Right { get; }
+
+        public QslBinaryNode(
+            QslTokenKind operatorKind,
+            IQslNode left,
+            IQslNode right)
+        {
+            OperatorKind = operatorKind;
+            Left = left;
+            Right = right;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 014: Core\AST\QslBlockNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslBlockNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using System.Collections.Generic;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslBlockNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Block;
+
+        public IReadOnlyList<IQslNode> Statements { get; }
+
+        public QslBlockNode(IReadOnlyList<IQslNode> statements)
+        {
+            Statements = statements;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 015: Core\AST\QslCallNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslCallNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using System.Collections.Generic;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslCallNode : QslNode
+    {
+        public override QslNodeKind Kind =>
+            QslNodeKind.Call;
+
+        public IQslNode Target { get; }
+
+        public IReadOnlyList<IQslNode> Arguments { get; }
+
+        public QslCallNode(
+            IQslNode target,
+            IReadOnlyList<IQslNode> arguments)
+        {
+            Target = target;
+            Arguments = arguments;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 016: Core\AST\QslEmbeddedNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslEmbeddedNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslEmbeddedNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Embedded;
+
+        public IQslNode InnerExpression { get; init; }
+
+        public QslEmbeddedNode(IQslNode inner)
+        {
+            InnerExpression = inner;
+        }
+    }
+}
+
+------------------------------------------------------------
+
+============================================================
+FILE 017: Core\AST\QslErrorNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslErrorNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslErrorNode : QslNode
+    {
+        public override QslNodeKind Kind =>
+            QslNodeKind.Error;
+
+        public string Message { get; }
+
+        public QslErrorNode(string message)
+        {
+            Message = message;
+        }
+
+        public override string ToString()
+        {
+            return $"Error: {Message}";
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 018: Core\AST\QslIdentifierNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslIdentifierNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslIdentifierNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Identifier;
+
+        public string Name { get; init; }
+
+        public QslIdentifierNode(string name)
+        {
+            Name = name;
+        }
+    }
+}
+
+------------------------------------------------------------
+
+============================================================
+FILE 019: Core\AST\QslLiteralNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslLiteralNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Ast;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslLiteralNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Literal;
+
+        public QslLiteralKind LiteralKind { get; init; }
+        public object? Value { get; init; }
+
+        public QslLiteralNode(QslLiteralKind kind, object? value)
+        {
+            LiteralKind = kind;
+            Value = value;
+        }
+    }
+}
+
+
+
+------------------------------------------------------------
+
+============================================================
+FILE 020: Core\AST\QslMemberAccessNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslMemberAccessNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslMemberAccessNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.MemberAccess;
+
+        public IQslNode Target { get; init; }
+        public string MemberName { get; init; }
+
+        public QslMemberAccessNode(IQslNode target, string memberName)
+        {
+            Target = target;
+            MemberName = memberName;
+        }
+    }    
+}
+
+------------------------------------------------------------
+
+============================================================
+FILE 021: Core\AST\QslNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+using QSL.Core.Base;
+
+namespace QSL.Core.Ast
+{
+    public abstract class QslNode : QslBaseObject, IQslNode
+    {
+        public abstract QslNodeKind Kind { get; }
+        public override string Type => "node";
+    }
+}
+
+
+
+------------------------------------------------------------
+
+============================================================
+FILE 022: Core\AST\QslTernaryNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslTernaryNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslTernaryNode : QslNode
+    {
+        public override QslNodeKind Kind =>
+            QslNodeKind.Ternary;
+
+        public IQslNode Condition { get; }
+
+        public IQslNode TrueExpr { get; }
+
+        public IQslNode FalseExpr { get; }
+
+        public QslTernaryNode(
+            IQslNode condition,
+            IQslNode trueExpr,
+            IQslNode falseExpr)
+        {
+            Condition = condition;
+            TrueExpr = trueExpr;
+            FalseExpr = falseExpr;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 023: Core\AST\QslUnaryNode.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\QslUnaryNode.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+using QSL.Core.Lexer;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslUnaryNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Unary;
+
+        public QslTokenKind OperatorKind { get; }
+        public IQslNode Operand { get; }
+
+        public QslUnaryNode(
+            QslTokenKind operatorKind,
+            IQslNode operand)
+        {
+            OperatorKind = operatorKind;
+            Operand = operand;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 024: Core\AST\Types\QslEvaluationStrategy.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\Types\QslEvaluationStrategy.cs
+
+SOURCE:
+------------------------------------------------------------
+namespace QSL.Core.Lexer
+{
+    public enum QslEvaluationStrategy
+    {
+        Eager,
+        ShortCircuitAnd,
+        ShortCircuitOr,
+        NullCoalescing,
+        Arrow,
+        Assignment
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 025: Core\AST\Types\QslLiteralKind.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\Types\QslLiteralKind.cs
+
+SOURCE:
+------------------------------------------------------------
+namespace QSL.Core.Ast.Types
+{
+    public enum QslLiteralKind
+    {
+        Number,
+        String,
+        Boolean,
+        Null,
+        Vector,
+        Velocity
+    }
+}
+
+
+
+------------------------------------------------------------
+
+============================================================
+FILE 026: Core\AST\Types\QslNodeKind.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\AST\Types\QslNodeKind.cs
+
+SOURCE:
+------------------------------------------------------------
+namespace QSL.Core.Ast.Types
+{
+    public enum QslNodeKind
+    {
+        Literal,
+        Identifier,
+        Unary,
+        Binary,
+        Call,
+        Embedded,
+        Block,
+        Error,
+        MemberAccess,
+        Ternary
+    }
+}
+
+
+
+------------------------------------------------------------
+
+============================================================
+FILE 027: Core\Base\QslBaseObject.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Base\QslBaseObject.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using QSL.Abstractions.Base;
+using QSL.Core.Provenance;
+using QSL.Core.Runtime;
+
+namespace QSL.Core.Base
+{
+    public abstract class QslBaseObject : IQslObject
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+
+        private string? _slug;
+
+        public string Slug => _slug ??= Id.ToSlug();
+
+        /// <summary>
+        /// Extends this object's existing heritage with another
+        /// processing or transformation identifier.
+        /// </summary>
+        public void AppendSlug(string suffix)
+        {
+            _slug = $"{Slug}-{suffix}";
+        }
+
+        /// <summary>
+        /// Establishes inherited or reconstructed heritage without
+        /// requiring this object to have experienced each represented
+        /// transformation itself.
+        ///
+        /// Intended for controlled operations such as cloning,
+        /// deep copying, or restoration.
+        /// </summary>
+        protected void SetSlug(string newSlug)
+        {
+            _slug = newSlug;
+        }
+
+        private readonly List<QslProvenanceEntry> _provenance = new();
+
+        public IReadOnlyList<QslProvenanceEntry> Provenance => _provenance;
+
+        protected QslProvenanceEntry AddProvenance(
+            QslProvenanceType type,
+            QslProvenanceCategory category,
+            string source,
+            string message,
+            Dictionary<string, object>? metadata = null)
+        {
+            var metadataSnapshot = metadata is null
+                ? new Dictionary<string, object>()
+                : new Dictionary<string, object>(metadata);
+
+            var entry = new QslProvenanceEntry
+            {
+                SubjectId = Id,
+                SubjectSlug = Slug,
+                EntryType = type,
+                Category = category,
+                Source = source,
+                Message = message,
+                Metadata = metadataSnapshot
+            };
+
+            _provenance.Add(entry);
+
+            QslRuntime.Instance.ProvenanceBus.Publish(entry);
+
+            return entry;
+        }
+
+        public abstract string Type { get; }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 028: Core\Base\QslRegistryItem.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Base\QslRegistryItem.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+
+namespace QSL.Core.Base
+{
+    public abstract class QslRegistryItem : QslRuntimeObject, IQslRegistryItem
+    {
+    }
+}
+
+------------------------------------------------------------
+
+============================================================
+FILE 029: Core\Base\QslRuntimeObject.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Base\QslRuntimeObject.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+
+namespace QSL.Core.Base
+{
+    public abstract class QslRuntimeObject : QslBaseObject, IQslRuntimeObject
+    {
+        public abstract string Name { get; }
+    }
+}
+
+------------------------------------------------------------
+
+============================================================
+FILE 030: Core\CompilerShims\IsExternalInit.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\CompilerShims\IsExternalInit.cs
+
+SOURCE:
+------------------------------------------------------------
+#if NETSTANDARD2_1
+namespace System.Runtime.CompilerServices
+{
+    [AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = false)]
+    public sealed class IsExternalInit : Attribute { }
+}
+#endif
+------------------------------------------------------------
+
+============================================================
+FILE 031: Core\Custom\Vector.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Custom\Vector.cs
+
+SOURCE:
+------------------------------------------------------------
+public readonly struct Vector
+{
+    public double X { get; }
+    public double Y { get; }
+
+    public Vector(double x, double y)
+    {
+        X = x;
+        Y = y;
+    }
+
+    public override string ToString() => $"Vector(X={X}, Y={Y})";
+}
+------------------------------------------------------------
+
+============================================================
+FILE 032: Core\Custom\Velocity.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Custom\Velocity.cs
+
+SOURCE:
+------------------------------------------------------------
+public sealed class Velocity
+{
+    public double X { get; }
+    public double Y { get; }
+
+    public Velocity(double x, double y)
+    {
+        X = x;
+        Y = y;
+    }
+
+    public override string ToString()
+        => $"Velocity(X={X}, Y={Y})";
+
+    // Optional: add vector-like operations
+    public Velocity Scale(double factor)
+        => new Velocity(X * factor, Y * factor);
+
+    public Velocity Add(Velocity other)
+        => new Velocity(X + other.X, Y + other.Y);
+
+    public Velocity Subtract(Velocity other)
+        => new Velocity(X - other.X, Y - other.Y);
+}
+------------------------------------------------------------
+
+============================================================
+FILE 033: Core\Extensions\QslGuidExtensions.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Extensions\QslGuidExtensions.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+
+namespace QSL.Core.Base
+{
+    public static class QslGuidExtensions
+    {
+        public static string ToSlug(this Guid guid)
+        {
+            var s = guid.ToString("N"); // 32 hex chars, no hyphens
+            return $"{s[..4]}-{s[^4..]}";
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 034: Core\Lexer\QslKindExtensions.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Lexer\QslKindExtensions.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+
+namespace QSL.Core.Lexer
+{
+    public static class QslKindExtensions
+    {
+        private static readonly IReadOnlyDictionary<
+            QslTokenKind,
+            QslTokenAttribute> Metadata = BuildMetadata();
+
+        public static QslTokenAttribute Info(
+            this QslTokenKind kind)
+        {
+            if (Metadata.TryGetValue(kind, out var info))
+                return info;
+
+            throw new InvalidOperationException(
+                $"No metadata is registered for {kind}.");
+        }
+
+        public static int Precedence(
+            this QslTokenKind kind)
+            => kind.Info().Precedence;
+
+        public static int UnaryPrecedence(
+            this QslTokenKind kind)
+            => kind.Info().UnaryPrecedence;
+
+        public static bool RightAssociative(
+            this QslTokenKind kind)
+            => kind.Info().RightAssociative;
+
+        public static bool IsUnary(
+            this QslTokenKind kind)
+            => kind.Info().Unary;
+
+        public static bool IsBinary(
+            this QslTokenKind kind)
+            => kind.Info().Binary;
+
+        public static string Symbol(
+            this QslTokenKind kind)
+            => kind.Info().Symbol;
+
+        private static IReadOnlyDictionary<
+            QslTokenKind,
+            QslTokenAttribute> BuildMetadata()
+        {
+            var metadata =
+                new Dictionary<QslTokenKind, QslTokenAttribute>();
+
+            foreach (QslTokenKind kind in Enum.GetValues(typeof(QslTokenKind)))
+            {
+                var member = typeof(QslTokenKind)
+                    .GetMember(kind.ToString());
+
+                if (member.Length == 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Unable to reflect QSL token kind {kind}.");
+                }
+
+                var attribute =
+                    member[0].GetCustomAttribute<QslTokenAttribute>();
+
+                if (attribute is null)
+                {
+                    throw new InvalidOperationException(
+                        $"QslTokenKind.{kind} has no " +
+                        $"{nameof(QslTokenAttribute)}.");
+                }
+
+                if (attribute.Unary &&
+                    attribute.UnaryPrecedence <= 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Unary token QslTokenKind.{kind} must " +
+                        "define UnaryPrecedence.");
+                }
+
+                if (attribute.Binary &&
+                    attribute.Precedence <= 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Binary token QslTokenKind.{kind} must " +
+                        "define Precedence.");
+                }
+
+                metadata.Add(kind, attribute);
+            }
+
+            return metadata;
+        }
+
+        public static Type ExecutorType(
+            this QslTokenKind kind)
+        {
+            return kind.Info().ExecutorType
+                   ?? throw new InvalidOperationException(
+                       $"QslTokenKind.{kind} has no executor.");
+        }
+
+        public static QslEvaluationStrategy EvaluationStrategy(
+            this QslTokenKind kind)
+            => kind.Info().EvaluationStrategy;
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 035: Core\Lexer\QslToken.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Lexer\QslToken.cs
+
+SOURCE:
+------------------------------------------------------------
+namespace QSL.Core.Lexer
+{
+    public readonly struct QslToken
+    {
+        public QslTokenKind Kind { get; }
+        public string Text { get; }
+
+        public QslToken(QslTokenKind kind, string text)
+        {
+            Kind = kind;
+            Text = text;
+        }
+
+        public override string ToString() => $"{Kind}: {Text}";
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 036: Core\Lexer\QslTokenAttribute.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Lexer\QslTokenAttribute.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+
+namespace QSL.Core.Lexer
+{
+    [AttributeUsage(AttributeTargets.Field)]
+    public sealed class QslTokenAttribute : Attribute
+    {
+        public string Symbol { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+
+        public bool Unary { get; set; }
+        public bool Binary { get; set; }
+
+        /// <summary>
+        /// Binding precedence when the token is used
+        /// as a binary operator.
+        /// </summary>
+        public int Precedence { get; set; }
+
+        /// <summary>
+        /// Binding precedence when the token is used
+        /// as a unary operator.
+        /// </summary>
+        public int UnaryPrecedence { get; set; }
+
+        /// <summary>
+        /// Determines whether the binary operator
+        /// associates from right to left.
+        /// </summary>
+        public bool RightAssociative { get; set; }
+
+        /// <summary>
+        /// Runtime implementation responsible for
+        /// executing this operator.
+        /// </summary>
+        public Type? ExecutorType { get; set; }
+
+        /// <summary>
+        /// Determines how this operator's operands
+        /// are evaluated by the runtime.
+        /// </summary>
+        public QslEvaluationStrategy EvaluationStrategy { get; set; }
+            = QslEvaluationStrategy.Eager;
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 037: Core\Lexer\QslTokenizer.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Lexer\QslTokenizer.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace QSL.Core.Lexer
+{
+    public sealed class QslTokenizer
+    {
+        private readonly string _source;
+        private int _pos;
+
+        public QslTokenizer(string source)
+        {
+            _source = source ?? string.Empty;
+            _pos = 0;
+        }
+
+        public IEnumerable<QslToken> Tokenize()
+        {
+            while (!IsAtEnd())
+            {
+                var current = Peek();
+
+                if (char.IsWhiteSpace(current))
+                {
+                    Advance();
+                    continue;
+                }
+
+                if (char.IsLetter(current) || current == '_')
+                {
+                    yield return ReadIdentifier();
+                    continue;
+                }
+
+                if (char.IsDigit(current))
+                {
+                    yield return ReadNumber();
+                    continue;
+                }
+
+                switch (current)
+                {
+                    case '"':
+                    {
+                        foreach (var token in ReadStringDouble())
+                            yield return token;
+
+                        continue;
+                    }
+
+                    case '\'':
+                    {
+                        foreach (var token in ReadStringSingle())
+                            yield return token;
+
+                        continue;
+                    }
+
+                    case '$':
+                        yield return MakeToken(
+                            QslTokenKind.Dollar,
+                            "$");
+
+                        Advance();
+                        continue;
+
+                    case '(':
+                        yield return MakeToken(
+                            QslTokenKind.LeftParen,
+                            "(");
+
+                        Advance();
+                        continue;
+
+                    case ')':
+                        yield return MakeToken(
+                            QslTokenKind.RightParen,
+                            ")");
+
+                        Advance();
+                        continue;
+
+                    case '{':
+                        yield return MakeToken(
+                            QslTokenKind.LeftBrace,
+                            "{");
+
+                        Advance();
+                        continue;
+
+                    case '}':
+                        yield return MakeToken(
+                            QslTokenKind.RightBrace,
+                            "}");
+
+                        Advance();
+                        continue;
+
+                    case ',':
+                        yield return MakeToken(
+                            QslTokenKind.Comma,
+                            ",");
+
+                        Advance();
+                        continue;
+
+                    case ';':
+                        yield return MakeToken(
+                            QslTokenKind.Semicolon,
+                            ";");
+
+                        Advance();
+                        continue;
+
+                    case '+':
+                        yield return MakeToken(
+                            QslTokenKind.Plus,
+                            "+");
+
+                        Advance();
+                        continue;
+
+                    case '-':
+                        yield return MakeToken(
+                            QslTokenKind.Minus,
+                            "-");
+
+                        Advance();
+                        continue;
+
+                    case '*':
+                        yield return MakeToken(
+                            QslTokenKind.Star,
+                            "*");
+
+                        Advance();
+                        continue;
+
+                    case '/':
+                        yield return MakeToken(
+                            QslTokenKind.Slash,
+                            "/");
+
+                        Advance();
+                        continue;
+
+                    case '%':
+                        yield return MakeToken(
+                            QslTokenKind.Percent,
+                            "%");
+
+                        Advance();
+                        continue;
+
+                    case '&':
+                        if (MatchNext('&'))
+                        {
+                            yield return MakeToken(
+                                QslTokenKind.AndAnd,
+                                "&&");
+
+                            continue;
+                        }
+
+                        yield return MakeUnknownToken(current);
+                        Advance();
+                        continue;
+
+                    case '|':
+                        if (MatchNext('|'))
+                        {
+                            yield return MakeToken(
+                                QslTokenKind.OrOr,
+                                "||");
+
+                            continue;
+                        }
+
+                        yield return MakeUnknownToken(current);
+                        Advance();
+                        continue;
+
+                    case '=':
+                        if (MatchNext('='))
+                        {
+                            yield return MakeToken(
+                                QslTokenKind.EqualEqual,
+                                "==");
+
+                            continue;
+                        }
+
+                        if (MatchNext('>'))
+                        {
+                            yield return MakeToken(
+                                QslTokenKind.Arrow,
+                                "=>");
+
+                            continue;
+                        }
+
+                        yield return MakeToken(
+                            QslTokenKind.Equal,
+                            "=");
+
+                        Advance();
+                        continue;
+
+                    case '!':
+                        if (MatchNext('='))
+                        {
+                            yield return MakeToken(
+                                QslTokenKind.BangEqual,
+                                "!=");
+
+                            continue;
+                        }
+
+                        yield return MakeToken(
+                            QslTokenKind.Bang,
+                            "!");
+
+                        Advance();
+                        continue;
+
+                    case '<':
+                        if (MatchNext('='))
+                        {
+                            yield return MakeToken(
+                                QslTokenKind.LessEqual,
+                                "<=");
+
+                            continue;
+                        }
+
+                        yield return MakeToken(
+                            QslTokenKind.Less,
+                            "<");
+
+                        Advance();
+                        continue;
+
+                    case '>':
+                        if (MatchNext('='))
+                        {
+                            yield return MakeToken(
+                                QslTokenKind.GreaterEqual,
+                                ">=");
+
+                            continue;
+                        }
+
+                        yield return MakeToken(
+                            QslTokenKind.Greater,
+                            ">");
+
+                        Advance();
+                        continue;
+
+                    case '?':
+                        if (MatchNext('?'))
+                        {
+                            yield return MakeToken(
+                                QslTokenKind.QuestionQuestion,
+                                "??");
+
+                            continue;
+                        }
+
+                        yield return MakeToken(
+                            QslTokenKind.Question,
+                            "?");
+
+                        Advance();
+                        continue;
+
+                    case ':':
+                        yield return MakeToken(
+                            QslTokenKind.Colon,
+                            ":");
+
+                        Advance();
+                        continue;
+
+                    default:
+                        yield return MakeUnknownToken(current);
+                        Advance();
+                        continue;
+                }
+            }
+
+            yield return MakeToken(
+                QslTokenKind.EndOfFile,
+                string.Empty);
+        }
+
+        private bool IsAtEnd()
+        {
+            return _pos >= _source.Length;
+        }
+
+        private char Peek()
+        {
+            return IsAtEnd()
+                ? '\0'
+                : _source[_pos];
+        }
+
+        private char Advance()
+        {
+            return IsAtEnd()
+                ? '\0'
+                : _source[_pos++];
+        }
+
+        /// <summary>
+        /// Checks whether the character immediately after the current
+        /// position matches the expected character.
+        ///
+        /// When matched, both the current character and the following
+        /// character are consumed.
+        /// </summary>
+        private bool MatchNext(char expected)
+        {
+            var nextPosition = _pos + 1;
+
+            if (nextPosition >= _source.Length)
+                return false;
+
+            if (_source[nextPosition] != expected)
+                return false;
+
+            _pos += 2;
+            return true;
+        }
+
+        private QslToken MakeToken(
+            QslTokenKind kind,
+            string text)
+        {
+            return new QslToken(kind, text);
+        }
+
+        private QslToken MakeUnknownToken(char value)
+        {
+            return MakeToken(
+                QslTokenKind.Unknown,
+                value.ToString());
+        }
+
+        private QslToken ReadIdentifier()
+        {
+            var start = _pos;
+
+            while (!IsAtEnd() &&
+                   (char.IsLetterOrDigit(Peek()) ||
+                    Peek() == '_'))
+            {
+                Advance();
+            }
+
+            var text = _source.Substring(
+                start,
+                _pos - start);
+
+            switch (text)
+            {
+                case "true":
+                    return MakeToken(
+                        QslTokenKind.True,
+                        text);
+
+                case "false":
+                    return MakeToken(
+                        QslTokenKind.False,
+                        text);
+
+                default:
+                    return MakeToken(
+                        QslTokenKind.Identifier,
+                        text);
+            }
+        }
+
+        private QslToken ReadNumber()
+        {
+            var start = _pos;
+
+            while (!IsAtEnd() &&
+                   char.IsDigit(Peek()))
+            {
+                Advance();
+            }
+
+            if (!IsAtEnd() &&
+                Peek() == '.' &&
+                HasNextDigit())
+            {
+                Advance();
+
+                while (!IsAtEnd() &&
+                       char.IsDigit(Peek()))
+                {
+                    Advance();
+                }
+            }
+
+            var text = _source.Substring(
+                start,
+                _pos - start);
+
+            return MakeToken(
+                QslTokenKind.Number,
+                text);
+        }
+
+        private bool HasNextDigit()
+        {
+            var nextPosition = _pos + 1;
+
+            return nextPosition < _source.Length &&
+                   char.IsDigit(_source[nextPosition]);
+        }
+
+        private IEnumerable<QslToken> ReadStringDouble()
+        {
+            Advance();
+
+            yield return MakeToken(
+                QslTokenKind.StringStartDouble,
+                "\"");
+
+            var content = new StringBuilder();
+
+            while (!IsAtEnd())
+            {
+                var current = Advance();
+
+                if (current == '"')
+                {
+                    yield return MakeToken(
+                        QslTokenKind.StringContent,
+                        content.ToString());
+
+                    yield return MakeToken(
+                        QslTokenKind.StringEndDouble,
+                        "\"");
+
+                    yield break;
+                }
+
+                if (current == '\\')
+                {
+                    if (IsAtEnd())
+                    {
+                        throw new InvalidOperationException(
+                            "Unterminated escape sequence in " +
+                            "double-quoted string.");
+                    }
+
+                    var escaped = Advance();
+
+                    content.Append(
+                        ResolveEscapeCharacter(escaped));
+
+                    continue;
+                }
+
+                content.Append(current);
+            }
+
+            throw new InvalidOperationException(
+                "Unterminated double-quoted string.");
+        }
+
+        private IEnumerable<QslToken> ReadStringSingle()
+        {
+            Advance();
+
+            yield return MakeToken(
+                QslTokenKind.StringStartSingle,
+                "'");
+
+            var content = new StringBuilder();
+
+            while (!IsAtEnd())
+            {
+                var current = Advance();
+
+                if (current == '\'')
+                {
+                    yield return MakeToken(
+                        QslTokenKind.StringContent,
+                        content.ToString());
+
+                    yield return MakeToken(
+                        QslTokenKind.StringEndSingle,
+                        "'");
+
+                    yield break;
+                }
+
+                content.Append(current);
+            }
+
+            throw new InvalidOperationException(
+                "Unterminated single-quoted string.");
+        }
+
+        private char ResolveEscapeCharacter(char escaped)
+        {
+            switch (escaped)
+            {
+                case '"':
+                    return '"';
+
+                case '\'':
+                    return '\'';
+
+                case '\\':
+                    return '\\';
+
+                case 'n':
+                    return '\n';
+
+                case 'r':
+                    return '\r';
+
+                case 't':
+                    return '\t';
+
+                case '$':
+                    return '$';
+
+                case ')':
+                    return ')';
+
+                default:
+                    return escaped;
+            }
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 038: Core\Lexer\QslTokenKind.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Lexer\QslTokenKind.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Runtime.Operators;
+
+namespace QSL.Core.Lexer
+{
+    public enum QslTokenKind
+    {
+        // ===== Core =====
+
+        [QslTokenAttribute(
+            Symbol = "",
+            Type = "core")]
+        Unknown,
+
+        [QslTokenAttribute(
+            Symbol = "",
+            Type = "core")]
+        EndOfFile,
+
+        [QslTokenAttribute(
+            Symbol = "",
+            Type = "identifier")]
+        Identifier,
+
+        [QslTokenAttribute(
+            Symbol = "",
+            Type = "number")]
+        Number,
+
+        // ===== Strings =====
+
+        [QslTokenAttribute(
+            Symbol = "\"",
+            Type = "string")]
+        StringStartDouble,
+
+        [QslTokenAttribute(
+            Symbol = "'",
+            Type = "string")]
+        StringStartSingle,
+
+        [QslTokenAttribute(
+            Symbol = "",
+            Type = "string")]
+        StringContent,
+
+        [QslTokenAttribute(
+            Symbol = "\"",
+            Type = "string")]
+        StringEndDouble,
+
+        [QslTokenAttribute(
+            Symbol = "'",
+            Type = "string")]
+        StringEndSingle,
+
+        // ===== Embedded =====
+
+        [QslTokenAttribute(
+            Symbol = "$",
+            Type = "punctuation")]
+        Dollar,
+
+        // ===== Grouping =====
+
+        [QslTokenAttribute(
+            Symbol = "(",
+            Type = "punctuation")]
+        LeftParen,
+
+        [QslTokenAttribute(
+            Symbol = ")",
+            Type = "punctuation")]
+        RightParen,
+
+        [QslTokenAttribute(
+            Symbol = "{",
+            Type = "punctuation")]
+        LeftBrace,
+
+        [QslTokenAttribute(
+            Symbol = "}",
+            Type = "punctuation")]
+        RightBrace,
+
+        // ===== Arithmetic Operators =====
+
+        [QslTokenAttribute(
+            Symbol = "+",
+            Type = "operator",
+            Binary = true,
+            Precedence = 12,
+            ExecutorType = typeof(QslAddOperator))]
+        Plus,
+
+        [QslTokenAttribute(
+            Symbol = "-",
+            Type = "operator",
+            Unary = true,
+            Binary = true,
+            Precedence = 12,
+            UnaryPrecedence = 15,
+            ExecutorType = typeof(QslSubtractOperator))]
+        Minus,
+
+        [QslTokenAttribute(
+            Symbol = "*",
+            Type = "operator",
+            Binary = true,
+            Precedence = 13,
+            ExecutorType = typeof(QslMultiplyOperator))]
+        Star,
+
+        [QslTokenAttribute(
+            Symbol = "/",
+            Type = "operator",
+            Binary = true,
+            Precedence = 13,
+            ExecutorType = typeof(QslDivideOperator))]
+        Slash,
+
+        [QslTokenAttribute(
+            Symbol = "%",
+            Type = "operator",
+            Binary = true,
+            Precedence = 13,
+            ExecutorType = typeof(QslModuloOperator))]
+        Percent,
+
+        // ===== Logical Operators =====
+
+        [QslTokenAttribute(
+            Symbol = "&&",
+            Type = "operator",
+            Binary = true,
+            Precedence = 4,
+            EvaluationStrategy = QslEvaluationStrategy.ShortCircuitAnd,
+            ExecutorType = typeof(QslAndOperator))]
+        AndAnd,
+
+        [QslTokenAttribute(
+            Symbol = "||",
+            Type = "operator",
+            Binary = true,
+            Precedence = 3,
+            EvaluationStrategy = QslEvaluationStrategy.ShortCircuitOr,
+            ExecutorType = typeof(QslOrOperator))]
+        OrOr,
+
+        // ===== Equality Operators =====
+
+        [QslTokenAttribute(
+            Symbol = "==",
+            Type = "operator",
+            Binary = true,
+            Precedence = 6,
+            ExecutorType = typeof(QslEqualOperator))]
+        EqualEqual,
+
+        [QslTokenAttribute(
+            Symbol = "!=",
+            Type = "operator",
+            Binary = true,
+            Precedence = 6,
+            ExecutorType = typeof(QslNotEqualOperator))]
+        BangEqual,
+
+        // ===== Separators =====
+
+        [QslTokenAttribute(
+            Symbol = ",",
+            Type = "punctuation")]
+        Comma,
+
+        [QslTokenAttribute(
+            Symbol = ";",
+            Type = "punctuation")]
+        Semicolon,
+
+        // ===== Unary Logical Operators =====
+
+        [QslTokenAttribute(
+            Symbol = "!",
+            Type = "operator",
+            Unary = true,
+            UnaryPrecedence = 15,
+            ExecutorType = typeof(QslNotOperator))]
+        Bang,
+
+        // ===== Comparison Operators =====
+
+        [QslTokenAttribute(
+            Symbol = "<",
+            Type = "operator",
+            Binary = true,
+            Precedence = 7,
+            ExecutorType = typeof(QslLessOperator))]
+        Less,
+
+        [QslTokenAttribute(
+            Symbol = "<=",
+            Type = "operator",
+            Binary = true,
+            Precedence = 7,
+            ExecutorType = typeof(QslLessEqualOperator))]
+        LessEqual,
+
+        [QslTokenAttribute(
+            Symbol = ">",
+            Type = "operator",
+            Binary = true,
+            Precedence = 7,
+            ExecutorType = typeof(QslGreaterOperator))]
+        Greater,
+
+        [QslTokenAttribute(
+            Symbol = ">=",
+            Type = "operator",
+            Binary = true,
+            Precedence = 7,
+            ExecutorType = typeof(QslGreaterEqualOperator))]
+        GreaterEqual,
+
+        // ===== Null Coalescing =====
+
+        [QslTokenAttribute(
+            Symbol = "??",
+            Type = "operator",
+            Binary = true,
+            Precedence = 2,
+            EvaluationStrategy = QslEvaluationStrategy.NullCoalescing,
+            ExecutorType = typeof(QslNullCoalescingOperator))]
+        QuestionQuestion,
+
+        // ===== Arrow =====
+
+        [QslTokenAttribute(
+            Symbol = "=>",
+            Type = "operator",
+            Binary = true,
+            Precedence = 1,
+            RightAssociative = true,
+            EvaluationStrategy = QslEvaluationStrategy.Arrow)]
+        Arrow,
+
+        // ===== Assignment =====
+
+        [QslTokenAttribute(
+            Symbol = "=",
+            Type = "operator",
+            Binary = true,
+            Precedence = 1,
+            RightAssociative = true,
+            EvaluationStrategy = QslEvaluationStrategy.Assignment)]
+        Equal,
+
+        // ===== Ternary =====
+
+        [QslTokenAttribute(
+            Symbol = "?",
+            Type = "punctuation",
+            Precedence = 3)]
+        Question,
+
+        [QslTokenAttribute(
+            Symbol = ":",
+            Type = "punctuation",
+            Precedence = 3)]
+        Colon,
+
+        // ===== Boolean Literals =====
+
+        [QslTokenAttribute(
+            Symbol = "true",
+            Type = "literal")]
+        True,
+
+        [QslTokenAttribute(
+            Symbol = "false",
+            Type = "literal")]
+        False
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 039: Core\Parser\QslParser.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Parser\QslParser.cs
+
+SOURCE:
+------------------------------------------------------------
+using System.Collections.Generic;
+using System.Globalization;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Ast.Types;
+using QSL.Core.Lexer;
+
+namespace QSL.Core.Parser
+{
+    public sealed class QslParser
+    {
+        private readonly List<QslToken> _tokens;
+        private readonly List<string> _errors = new List<string>();
+
+        private int _pos;
+
+        public IReadOnlyList<string> Errors => _errors;
+
+        public QslParser(IEnumerable<QslToken> tokens)
+        {
+            _tokens = new List<QslToken>(tokens);
+            _pos = 0;
+        }
+
+        public IQslNode ParseExpression()
+        {
+            var expression = ParseBinaryExpression(0);
+
+            // Ternary:
+            // condition ? trueExpression : falseExpression
+            if (Peek().Kind == QslTokenKind.Question)
+            {
+                Advance();
+
+                var trueExpression = ParseExpression();
+
+                if (Peek().Kind != QslTokenKind.Colon)
+                {
+                    const string message =
+                        "Expected ':' in ternary expression.";
+
+                    _errors.Add(message);
+
+                    return new QslErrorNode(message);
+                }
+
+                Advance();
+
+                var falseExpression = ParseExpression();
+
+                expression = new QslTernaryNode(
+                    expression,
+                    trueExpression,
+                    falseExpression);
+            }
+
+            return expression;
+        }
+
+        private IQslNode ParseBinaryExpression(
+            int minimumPrecedence)
+        {
+            var left = ParsePrefixExpression();
+
+            while (true)
+            {
+                var operatorKind = Peek().Kind;
+
+                if (!QslKindExtensions.IsBinary(operatorKind))
+                    break;
+
+                var precedence =
+                    QslKindExtensions.Precedence(operatorKind);
+
+                if (precedence < minimumPrecedence)
+                    break;
+
+                var rightAssociative =
+                    QslKindExtensions.RightAssociative(
+                        operatorKind);
+
+                Advance();
+
+                var nextMinimumPrecedence =
+                    rightAssociative
+                        ? precedence
+                        : precedence + 1;
+
+                var right = ParseBinaryExpression(
+                    nextMinimumPrecedence);
+
+                left = new QslBinaryNode(
+                    operatorKind,
+                    left,
+                    right);
+            }
+
+            return left;
+        }
+
+        private IQslNode ParsePrefixExpression()
+        {
+            var operatorKind = Peek().Kind;
+
+            if (!QslKindExtensions.IsUnary(operatorKind))
+                return ParsePrimary();
+
+            Advance();
+
+            var unaryPrecedence =
+                QslKindExtensions.UnaryPrecedence(
+                    operatorKind);
+
+            var operand = ParseBinaryExpression(
+                unaryPrecedence);
+
+            return new QslUnaryNode(
+                operatorKind,
+                operand);
+        }
+
+        private IQslNode ParsePrimary()
+        {
+            var token = Peek();
+
+            switch (token.Kind)
+            {
+                case QslTokenKind.Number:
+                    return ParseNumberLiteral();
+
+                case QslTokenKind.Identifier:
+                    return ParseIdentifierOrCall();
+
+                case QslTokenKind.LeftParen:
+                    return ParseGroupedExpression();
+
+                case QslTokenKind.LeftBrace:
+                    return ParseBlock();
+
+                case QslTokenKind.Dollar:
+                    return ParseEmbeddedExpression();
+
+                case QslTokenKind.StringStartDouble:
+                    return ParseStringLiteralDouble();
+
+                case QslTokenKind.StringStartSingle:
+                    return ParseStringLiteralSingle();
+
+                case QslTokenKind.True:
+                case QslTokenKind.False:
+                    return ParseBooleanLiteral();
+
+                case QslTokenKind.EndOfFile:
+                {
+                    const string message =
+                        "Unexpected end of QSL expression.";
+
+                    _errors.Add(message);
+
+                    return new QslErrorNode(message);
+                }
+
+                default:
+                {
+                    var message =
+                        "Unexpected token: " +
+                        $"{token.Kind} '{token.Text}'.";
+
+                    _errors.Add(message);
+                    Advance();
+
+                    return new QslErrorNode(message);
+                }
+            }
+        }
+
+        private IQslNode ParseNumberLiteral()
+        {
+            var token = Advance();
+
+            double number;
+
+            if (double.TryParse(
+                    token.Text,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out number))
+            {
+                return new QslLiteralNode(
+                    QslLiteralKind.Number,
+                    number);
+            }
+
+            var message =
+                $"Invalid number literal: '{token.Text}'.";
+
+            _errors.Add(message);
+
+            return new QslErrorNode(message);
+        }
+
+        private IQslNode ParseIdentifierOrCall()
+        {
+            var identifierToken = Consume(
+                QslTokenKind.Identifier,
+                "Expected identifier.");
+
+            var identifier =
+                new QslIdentifierNode(
+                    identifierToken.Text);
+
+            if (Peek().Kind == QslTokenKind.LeftParen)
+            {
+                return ParseCallExpression(identifier);
+            }
+
+            return identifier;
+        }
+
+        private IQslNode ParseCallExpression(
+            QslIdentifierNode target)
+        {
+            Consume(
+                QslTokenKind.LeftParen,
+                "Expected '(' after function name.");
+
+            var arguments = new List<IQslNode>();
+
+            if (Peek().Kind != QslTokenKind.RightParen)
+            {
+                while (Peek().Kind != QslTokenKind.EndOfFile)
+                {
+                    arguments.Add(ParseExpression());
+
+                    if (Peek().Kind == QslTokenKind.RightParen)
+                        break;
+
+                    if (Peek().Kind != QslTokenKind.Comma)
+                    {
+                        var token = Peek();
+
+                        var message =
+                            "Expected ',' between arguments. " +
+                            $"Found {token.Kind} '{token.Text}'.";
+
+                        _errors.Add(message);
+
+                        SynchronizeCallArguments();
+
+                        if (Peek().Kind == QslTokenKind.RightParen)
+                            break;
+
+                        if (Peek().Kind == QslTokenKind.EndOfFile)
+                            break;
+                    }
+
+                    if (Peek().Kind == QslTokenKind.Comma)
+                        Advance();
+                }
+            }
+
+            Consume(
+                QslTokenKind.RightParen,
+                "Expected ')' after arguments.");
+
+            return new QslCallNode(
+                target,
+                arguments);
+        }
+
+        private IQslNode ParseGroupedExpression()
+        {
+            Consume(
+                QslTokenKind.LeftParen,
+                "Expected '('.");
+
+            var expression = ParseExpression();
+
+            Consume(
+                QslTokenKind.RightParen,
+                "Expected ')' after grouped expression.");
+
+            return expression;
+        }
+
+        private IQslNode ParseEmbeddedExpression()
+        {
+            Consume(
+                QslTokenKind.Dollar,
+                "Expected '$' for embedded expression.");
+
+            Consume(
+                QslTokenKind.LeftParen,
+                "Expected '(' after '$'.");
+
+            var innerExpression = ParseExpression();
+
+            Consume(
+                QslTokenKind.RightParen,
+                "Expected ')' to close embedded expression.");
+
+            return new QslEmbeddedNode(
+                innerExpression);
+        }
+
+        private IQslNode ParseStringLiteralDouble()
+        {
+            Consume(
+                QslTokenKind.StringStartDouble,
+                "Expected opening double quote.");
+
+            var content = string.Empty;
+
+            if (Peek().Kind == QslTokenKind.StringContent)
+                content = Advance().Text;
+
+            Consume(
+                QslTokenKind.StringEndDouble,
+                "Expected closing double quote.");
+
+            return new QslLiteralNode(
+                QslLiteralKind.String,
+                content);
+        }
+
+        private IQslNode ParseStringLiteralSingle()
+        {
+            Consume(
+                QslTokenKind.StringStartSingle,
+                "Expected opening single quote.");
+
+            var content = string.Empty;
+
+            if (Peek().Kind == QslTokenKind.StringContent)
+                content = Advance().Text;
+
+            Consume(
+                QslTokenKind.StringEndSingle,
+                "Expected closing single quote.");
+
+            return new QslLiteralNode(
+                QslLiteralKind.String,
+                content);
+        }
+
+        private IQslNode ParseBlock()
+        {
+            Consume(
+                QslTokenKind.LeftBrace,
+                "Expected '{' to start block.");
+
+            var statements = new List<IQslNode>();
+
+            while (Peek().Kind != QslTokenKind.RightBrace &&
+                   Peek().Kind != QslTokenKind.EndOfFile)
+            {
+                var statement = ParseExpression();
+                statements.Add(statement);
+
+                if (Peek().Kind == QslTokenKind.Semicolon)
+                {
+                    Advance();
+                    continue;
+                }
+
+                const string message =
+                    "Expected ';' between statements.";
+
+                _errors.Add(message);
+
+                statements.Add(
+                    new QslErrorNode(message));
+
+                SynchronizeBlock();
+
+                if (Peek().Kind == QslTokenKind.Semicolon)
+                    Advance();
+            }
+
+            if (Peek().Kind == QslTokenKind.EndOfFile)
+            {
+                const string message =
+                    "Expected '}' before end of file.";
+
+                _errors.Add(message);
+
+                return new QslBlockNode(statements);
+            }
+
+            Consume(
+                QslTokenKind.RightBrace,
+                "Expected '}' to close block.");
+
+            return new QslBlockNode(statements);
+        }
+
+        private IQslNode ParseBooleanLiteral()
+        {
+            var token = Peek();
+
+            if (token.Kind == QslTokenKind.True)
+            {
+                Advance();
+
+                return new QslLiteralNode(
+                    QslLiteralKind.Boolean,
+                    true);
+            }
+
+            if (token.Kind == QslTokenKind.False)
+            {
+                Advance();
+
+                return new QslLiteralNode(
+                    QslLiteralKind.Boolean,
+                    false);
+            }
+
+            var message =
+                "Expected boolean literal. " +
+                $"Found {token.Kind} '{token.Text}'.";
+
+            _errors.Add(message);
+            Advance();
+
+            return new QslErrorNode(message);
+        }
+
+        private void SynchronizeCallArguments()
+        {
+            while (Peek().Kind != QslTokenKind.Comma &&
+                   Peek().Kind != QslTokenKind.RightParen &&
+                   Peek().Kind != QslTokenKind.EndOfFile)
+            {
+                Advance();
+            }
+        }
+
+        private void SynchronizeBlock()
+        {
+            while (Peek().Kind != QslTokenKind.Semicolon &&
+                   Peek().Kind != QslTokenKind.RightBrace &&
+                   Peek().Kind != QslTokenKind.EndOfFile)
+            {
+                Advance();
+            }
+        }
+
+        private QslToken Peek()
+        {
+            if (_tokens.Count == 0)
+            {
+                return new QslToken(
+                    QslTokenKind.EndOfFile,
+                    string.Empty);
+            }
+
+            if (_pos < _tokens.Count)
+                return _tokens[_pos];
+
+            return _tokens[_tokens.Count - 1];
+        }
+
+        private QslToken Advance()
+        {
+            var token = Peek();
+
+            if (_pos < _tokens.Count)
+                _pos++;
+
+            return token;
+        }
+
+        private QslToken Consume(
+            QslTokenKind expectedKind,
+            string message)
+        {
+            var token = Peek();
+
+            if (token.Kind == expectedKind)
+                return Advance();
+
+            _errors.Add(
+                $"{message} Found " +
+                $"{token.Kind} '{token.Text}'.");
+
+            return new QslToken(
+                QslTokenKind.Unknown,
+                token.Text);
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 040: Core\Provenance\QslProvenanceBus.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Provenance\QslProvenanceBus.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace QSL.Core.Provenance
+{
+    public sealed class QslProvenanceBus
+    {
+        private readonly List<QslProvenanceEntry> _entries = new();
+        private readonly HashSet<QslProvenanceEntry> _published = new();
+
+        private readonly Dictionary<string, List<QslProvenanceEntry>> _bySlug
+            = new(StringComparer.Ordinal);
+
+        private readonly Dictionary<Guid, List<QslProvenanceEntry>> _byGuid
+            = new();
+
+        private readonly Dictionary<QslProvenanceType, List<QslProvenanceEntry>> _byType
+            = new();
+
+        private readonly Dictionary<QslProvenanceCategory, List<QslProvenanceEntry>> _byCategory
+            = new();
+
+        public event Action<QslProvenanceEntry>? Stream;
+
+        public IDisposable Subscribe(
+            Func<QslProvenanceEntry, bool> filter,
+            Action<QslProvenanceEntry> handler)
+        {
+            if (filter is null)
+                throw new ArgumentNullException(nameof(filter));
+
+            if (handler is null)
+                throw new ArgumentNullException(nameof(handler));
+
+            void SubscriptionHandler(QslProvenanceEntry entry)
+            {
+                if (filter(entry))
+                    handler(entry);
+            }
+
+            Stream += SubscriptionHandler;
+
+            return new Subscription(
+                () => Stream -= SubscriptionHandler
+            );
+        }
+
+        internal void Publish(QslProvenanceEntry entry)
+        {
+            if (entry is null)
+                throw new ArgumentNullException(nameof(entry));
+
+            if (!_published.Add(entry))
+                return;
+
+            Index(entry);
+
+            Stream?.Invoke(entry);
+        }
+
+        private void Index(QslProvenanceEntry entry)
+        {
+            _entries.Add(entry);
+
+            IndexBySlug(entry);
+            IndexByGuid(entry);
+            IndexByType(entry);
+            IndexByCategory(entry);
+        }
+
+        private void IndexBySlug(QslProvenanceEntry entry)
+        {
+            if (string.IsNullOrWhiteSpace(entry.SubjectSlug))
+                return;
+
+            if (!_bySlug.TryGetValue(entry.SubjectSlug, out var entries))
+            {
+                entries = new List<QslProvenanceEntry>();
+                _bySlug[entry.SubjectSlug] = entries;
+            }
+
+            entries.Add(entry);
+        }
+
+        private void IndexByGuid(QslProvenanceEntry entry)
+        {
+            if (!_byGuid.TryGetValue(entry.SubjectId, out var entries))
+            {
+                entries = new List<QslProvenanceEntry>();
+                _byGuid[entry.SubjectId] = entries;
+            }
+
+            entries.Add(entry);
+        }
+
+        private void IndexByType(QslProvenanceEntry entry)
+        {
+            if (!_byType.TryGetValue(entry.EntryType, out var entries))
+            {
+                entries = new List<QslProvenanceEntry>();
+                _byType[entry.EntryType] = entries;
+            }
+
+            entries.Add(entry);
+        }
+
+        private void IndexByCategory(QslProvenanceEntry entry)
+        {
+            if (!_byCategory.TryGetValue(entry.Category, out var entries))
+            {
+                entries = new List<QslProvenanceEntry>();
+                _byCategory[entry.Category] = entries;
+            }
+
+            entries.Add(entry);
+        }
+
+        public IReadOnlyList<QslProvenanceEntry> GetAll()
+        {
+            return _entries.ToArray();
+        }
+
+        public IReadOnlyList<QslProvenanceEntry> GetForSlug(string slug)
+        {
+            if (string.IsNullOrWhiteSpace(slug))
+                return Array.Empty<QslProvenanceEntry>();
+
+            return _bySlug.TryGetValue(slug, out var entries)
+                ? entries.ToArray()
+                : Array.Empty<QslProvenanceEntry>();
+        }
+
+        public IReadOnlyList<QslProvenanceEntry> GetForGuid(Guid id)
+        {
+            return _byGuid.TryGetValue(id, out var entries)
+                ? entries.ToArray()
+                : Array.Empty<QslProvenanceEntry>();
+        }
+
+        public IReadOnlyList<QslProvenanceEntry> GetByType(
+            QslProvenanceType type)
+        {
+            return _byType.TryGetValue(type, out var entries)
+                ? entries.ToArray()
+                : Array.Empty<QslProvenanceEntry>();
+        }
+
+        public IReadOnlyList<QslProvenanceEntry> GetByCategory(
+            QslProvenanceCategory category)
+        {
+            return _byCategory.TryGetValue(category, out var entries)
+                ? entries.ToArray()
+                : Array.Empty<QslProvenanceEntry>();
+        }
+
+        public IReadOnlyList<QslProvenanceEntry> GetBetween(
+            DateTime start,
+            DateTime end)
+        {
+            if (end < start)
+                throw new ArgumentOutOfRangeException(
+                    nameof(end),
+                    "The end timestamp cannot precede the start timestamp."
+                );
+
+            return _entries
+                .Where(entry =>
+                    entry.TimestampUtc >= start &&
+                    entry.TimestampUtc <= end)
+                .ToArray();
+        }
+
+        public IReadOnlyList<(
+            string slug,
+            QslProvenanceType type,
+            int count)> Compress()
+        {
+            return _bySlug
+                .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+                .SelectMany(pair =>
+                    pair.Value
+                        .GroupBy(entry => entry.EntryType)
+                        .OrderBy(group => group.Key)
+                        .Select(group => (
+                            slug: pair.Key,
+                            type: group.Key,
+                            count: group.Count()
+                        )))
+                .ToArray();
+        }
+
+        public string Export(
+            Func<QslProvenanceEntry, bool>? filter = null)
+        {
+            IEnumerable<QslProvenanceEntry> entries = _entries;
+
+            if (filter is not null)
+                entries = entries.Where(filter);
+
+            return System.Text.Json.JsonSerializer.Serialize(
+                entries.ToArray()
+            );
+        }
+
+        private sealed class Subscription : IDisposable
+        {
+            private Action? _unsubscribe;
+
+            public Subscription(Action unsubscribe)
+            {
+                _unsubscribe = unsubscribe;
+            }
+
+            public void Dispose()
+            {
+                var unsubscribe = _unsubscribe;
+
+                if (unsubscribe is null)
+                    return;
+
+                _unsubscribe = null;
+                unsubscribe();
+            }
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 041: Core\Provenance\QslProvenanceEntry.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Provenance\QslProvenanceEntry.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+
+namespace QSL.Core.Provenance
+{
+    public sealed class QslProvenanceEntry
+    {
+        /// <summary>
+        /// Stable identity of the object this provenance describes.
+        /// </summary>
+        public Guid SubjectId { get; init; }
+
+        /// <summary>
+        /// Heritage of the subject at the moment this entry was recorded.
+        /// This is intentionally a snapshot because a subject's slug may
+        /// continue to evolve through later processing.
+        /// </summary>
+        public string SubjectSlug { get; init; } = string.Empty;
+
+        public QslProvenanceType EntryType { get; init; }
+
+        public QslProvenanceCategory Category { get; init; }
+
+        public DateTime TimestampUtc { get; init; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// Component or process responsible for producing the entry.
+        /// </summary>
+        public string Source { get; init; } = string.Empty;
+
+        public string Message { get; init; } = string.Empty;
+
+        public IReadOnlyDictionary<string, object> Metadata { get; init; }
+            = new Dictionary<string, object>();
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 042: Core\Provenance\QslProvenanceType.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Provenance\QslProvenanceType.cs
+
+SOURCE:
+------------------------------------------------------------
+namespace QSL.Core.Provenance
+{
+    public enum QslProvenanceType
+    {
+        Info, Warning, Error,
+        Parse, Tokenize, Evaluate, Execute,
+        DescriptorApply, CapabilityApply,
+        Semantic, Belief, Trust, Memory,
+        Temporal, Prediction, System, Routing,
+        Merge, Context, BlockCreate, BlockProcess
+    }
+
+    public enum QslProvenanceCategory
+    {
+        QslSyntax,
+        QslRuntime,
+        WildsSemantic,
+        WildsTemporal,
+        WildsMemory,
+        WildsPrediction,
+        System,
+        Evaluation,
+        Capability
+    }
+}
+
+------------------------------------------------------------
+
+============================================================
+FILE 043: Core\Runtime\Capabilities\PhysicsCapability.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Capabilities\PhysicsCapability.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+public sealed class PhysicsCapability : QslRegistryItem, IQslCapability
+{
+    public override string Name => "PhysicsCapability";
+    public override string Type => "capability";
+
+    public void Apply(QslRuntimeContext context)
+    {
+        context.Registry.RegisterType(
+            new ApplyForceFunction(this)
+        );
+
+        context.Registry.RegisterType(
+            new DampenVelocityFunction()
+        );
+    }
+
+    public object? ApplyForce(
+        object?[] args,
+        QslRuntimeContext context)
+    {
+        if (args.Length == 2 &&
+            args[0] is string entity &&
+            args[1] is Vector force)
+        {
+            var velocity = new Velocity(
+                force.X * 0.1,
+                force.Y * 0.1
+            );
+
+            context.SetVariable(
+                $"{entity}.Velocity",
+                velocity
+            );
+
+            context.AppendSlug(
+                "force-applied"
+            );
+
+            AddProvenance(
+                QslProvenanceType.Info,
+                QslProvenanceCategory.Capability,
+                Name,
+                $"Applied force {force} to {entity}"
+            );
+
+            return velocity;
+        }
+
+        AddProvenance(
+            QslProvenanceType.Error,
+            QslProvenanceCategory.Capability,
+            Name,
+            "ApplyForce requires (entity, Vector) arguments."
+        );
+
+        return null;
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 044: Core\Runtime\Context\QslContextBase.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Context\QslContextBase.cs
+
+SOURCE:
+------------------------------------------------------------
+using System.Collections.Generic;
+using QSL.Abstractions.Context;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Base
+{
+    public abstract class QslContextBase : QslBaseObject, IContextBase
+    {
+        private readonly Dictionary<string, object?> _variables = new();
+        private readonly Dictionary<string, object?> _metadata = new();
+
+        public IReadOnlyDictionary<string, object?> Variables => _variables;
+
+        public IReadOnlyDictionary<string, object?> Metadata => _metadata;
+
+        public void SetVariable(
+            string key,
+            object? value)
+        {
+            _variables[key] = value;
+
+            AddProvenance(
+                QslProvenanceType.Context,
+                QslProvenanceCategory.QslRuntime,
+                nameof(QslContextBase),
+                $"Variable set: {key}",
+                new Dictionary<string, object>
+                {
+                    ["value"] = value!
+                }
+            );
+        }
+
+        public object? GetVariable(string key)
+        {
+            return _variables.TryGetValue(
+                key,
+                out var value)
+                ? value
+                : null;
+        }
+
+        public void SetMetadata(
+            string key,
+            object? value)
+        {
+            _metadata[key] = value;
+
+            AddProvenance(
+                QslProvenanceType.Context,
+                QslProvenanceCategory.QslRuntime,
+                nameof(QslContextBase),
+                $"Metadata set: {key}",
+                new Dictionary<string, object>
+                {
+                    ["value"] = value!
+                }
+            );
+        }
+
+        public override string Type => "context";
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 045: Core\Runtime\Context\QslRuntimeContext.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Context\QslRuntimeContext.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+using QSL.Core.Runtime;
+
+public sealed class QslRuntimeContext : QslContextBase
+{
+    public QslRuntimeRegistry Registry { get; }
+
+    public QslRuntimeContext(QslRuntimeRegistry registry)
+    {
+        Registry = registry;
+    }
+
+    public override string Type => "runtime-context";
+
+    public object? Evaluate(IQslNode node)
+    {
+        var key = node.Kind;
+
+        if (Registry.Evaluators.TryGetValue(key, out var evaluator))
+            return evaluator.Evaluate(node, this);
+
+        AddProvenance(
+            QslProvenanceType.Error,
+            QslProvenanceCategory.Evaluation,
+            "QslRuntimeContext",
+            $"No evaluator registered for node kind: {key}"
+        );
+
+        return null;
+    }
+
+    public object? ResolveIdentifier(string idName)
+    {
+        if (string.IsNullOrEmpty(idName))
+        {
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                "QslRuntimeContext",
+                "Attempted to resolve a null/empty identifier."
+            );
+
+            return null;
+        }
+
+        var variable = GetVariable(idName);
+
+        if (variable != null)
+            return variable;
+
+        if (Registry.Functions.TryGetValue(idName, out var function))
+            return function;
+
+        if (Registry.Descriptors.TryGetValue(idName, out var descriptor))
+            return descriptor;
+
+        if (Registry.Capabilities.TryGetValue(idName, out var capability))
+            return capability;
+
+        AddProvenance(
+            QslProvenanceType.Error,
+            QslProvenanceCategory.Evaluation,
+            "QslRuntimeContext",
+            $"Unresolved identifier: {idName}"
+        );
+
+        return null;
+    }
+}
+
+------------------------------------------------------------
+
+============================================================
+FILE 046: Core\Runtime\Descriptors\PlayerDescriptor.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Descriptors\PlayerDescriptor.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Base;
+
+public sealed class PlayerDescriptor : QslRegistryItem, IQslDescriptor
+{
+    public override string Name => "Player";
+    public override string Type => "descriptor";
+
+    public void Apply(QslRuntimeContext context)
+    {
+        context.SetVariable("health", 100);
+        context.SetVariable("mana", 50);
+    }
+}
+
+
+
+public sealed class NPCDescriptor : QslRegistryItem, IQslDescriptor
+{
+    public override string Name => "NPC";
+    public override string Type => "descriptor";
+
+    public void Apply(QslRuntimeContext context)
+    {
+        context.SetVariable("npc.health", 50);
+        context.SetVariable("npc.aggression", 0.25);
+    }
+}
+
+public sealed class EntityDescriptor : QslRegistryItem, IQslDescriptor
+{
+    public override string Name => "Entity";
+    public override string Type => "descriptor";
+
+    public void Apply(QslRuntimeContext context)
+    {
+        context.SetVariable("entity.id", Guid.NewGuid().ToString());
+        context.SetVariable("entity.active", true);
+    }
+}
+
+
+------------------------------------------------------------
+
+============================================================
+FILE 047: Core\Runtime\Evaluators\QslBinaryEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Evaluators\QslBinaryEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Base;
+using QSL.Core.Lexer;
+using QSL.Core.Provenance;
+using QSL.Core.Runtime.Operators;
+
+namespace QSL.Core.Runtime.Evaluators
+{
+    public sealed class QslBinaryEvaluator :
+        QslRegistryItem,
+        IQslEvaluator
+    {
+        public override string Type => "evaluator";
+
+        public override string Name => "binary";
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node is not QslBinaryNode binary)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Binary evaluator received an incompatible node."
+                );
+
+                return null;
+            }
+
+            var strategy =
+                QslKindExtensions.EvaluationStrategy(
+                    binary.OperatorKind);
+
+            switch (strategy)
+            {
+                case QslEvaluationStrategy.Eager:
+                    return EvaluateEager(
+                        binary,
+                        context);
+
+                case QslEvaluationStrategy.ShortCircuitAnd:
+                    return EvaluateShortCircuitAnd(
+                        binary,
+                        context);
+
+                case QslEvaluationStrategy.ShortCircuitOr:
+                    return EvaluateShortCircuitOr(
+                        binary,
+                        context);
+
+                case QslEvaluationStrategy.NullCoalescing:
+                    return EvaluateNullCoalescing(
+                        binary,
+                        context);
+
+                case QslEvaluationStrategy.Arrow:
+                    return EvaluateArrow(
+                        binary,
+                        context);
+                
+                case QslEvaluationStrategy.Assignment:
+                    return EvaluateAssignment(
+                        binary,
+                        context);
+                
+                default:
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        Name,
+                        $"Unsupported evaluation strategy " +
+                        $"'{strategy}' for " +
+                        $"'{binary.OperatorKind}'."
+                    );
+
+                    return null;
+            }
+        }
+
+        private object? EvaluateEager(
+            QslBinaryNode binary,
+            QslRuntimeContext context)
+        {
+            var leftValue =
+                context.Evaluate(binary.Left);
+
+            var rightValue =
+                context.Evaluate(binary.Right);
+
+            var executor =
+                QslOperatorResolver.Resolve(
+                    binary.OperatorKind);
+
+            return executor.ApplyBinary(
+                leftValue,
+                rightValue,
+                context);
+        }
+
+        private object? EvaluateShortCircuitAnd(
+            QslBinaryNode binary,
+            QslRuntimeContext context)
+        {
+            var leftValue =
+                context.Evaluate(binary.Left);
+
+            if (leftValue is not bool leftBoolean)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Left operand of '&&' must be boolean."
+                );
+
+                return null;
+            }
+
+            if (!leftBoolean)
+                return false;
+
+            var rightValue =
+                context.Evaluate(binary.Right);
+
+            if (rightValue is not bool rightBoolean)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Right operand of '&&' must be boolean."
+                );
+
+                return null;
+            }
+
+            var executor =
+                QslOperatorResolver.Resolve(
+                    binary.OperatorKind);
+
+            return executor.ApplyBinary(
+                leftBoolean,
+                rightBoolean,
+                context);
+        }
+
+        private object? EvaluateShortCircuitOr(
+            QslBinaryNode binary,
+            QslRuntimeContext context)
+        {
+            var leftValue =
+                context.Evaluate(binary.Left);
+
+            if (leftValue is not bool leftBoolean)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Left operand of '||' must be boolean."
+                );
+
+                return null;
+            }
+
+            if (leftBoolean)
+                return true;
+
+            var rightValue =
+                context.Evaluate(binary.Right);
+
+            if (rightValue is not bool rightBoolean)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Right operand of '||' must be boolean."
+                );
+
+                return null;
+            }
+
+            var executor =
+                QslOperatorResolver.Resolve(
+                    binary.OperatorKind);
+
+            return executor.ApplyBinary(
+                leftBoolean,
+                rightBoolean,
+                context);
+        }
+
+        private object? EvaluateNullCoalescing(
+            QslBinaryNode binary,
+            QslRuntimeContext context)
+        {
+            var leftValue =
+                context.Evaluate(binary.Left);
+
+            if (leftValue is not null)
+                return leftValue;
+
+            var rightValue =
+                context.Evaluate(binary.Right);
+
+            var executor =
+                QslOperatorResolver.Resolve(
+                    binary.OperatorKind);
+
+            return executor.ApplyBinary(
+                leftValue,
+                rightValue,
+                context);
+        }
+
+        private object? EvaluateAssignment(
+            QslBinaryNode binary,
+            QslRuntimeContext context)
+        {
+            if (binary.Left is not QslIdentifierNode identifier)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Left operand of assignment must be an identifier."
+                );
+
+                return null;
+            }
+
+            var value =
+                context.Evaluate(binary.Right);
+
+            context.SetVariable(
+                identifier.Name,
+                value);
+
+            return value;
+        }
+        private object? EvaluateArrow(
+            QslBinaryNode binary,
+            QslRuntimeContext context)
+        {
+            context.Evaluate(binary.Left);
+
+            return context.Evaluate(binary.Right);
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 048: Core\Runtime\Evaluators\QslBlockEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Evaluators\QslBlockEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Evaluators
+{
+    public sealed class QslBlockEvaluator :
+        QslRegistryItem,
+        IQslEvaluator
+    {
+        public override string Type => "evaluator";
+
+        public override string Name => "Block";
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node is not QslBlockNode block)
+            {
+                const string message =
+                    "QslBlockEvaluator received a non-block node.";
+
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    message
+                );
+
+                return new QslErrorNode(message);
+            }
+
+            object? lastValue = null;
+
+            foreach (var statement in block.Statements)
+            {
+                if (statement is QslErrorNode error)
+                {
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        Name,
+                        error.Message
+                    );
+
+                    lastValue = error;
+                    continue;
+                }
+
+                lastValue =
+                    context.Evaluate(statement);
+            }
+
+            return lastValue;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 049: Core\Runtime\Evaluators\QslCallEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Evaluators\QslCallEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using System.Linq;
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Evaluators
+{
+    public sealed class QslCallEvaluator :
+        QslRegistryItem,
+        IQslEvaluator
+    {
+        public override string Type => "evaluator";
+
+        public override string Name => "call";
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node is not QslCallNode call)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Call evaluator received an incompatible node."
+                );
+
+                return null;
+            }
+
+            var targetObject =
+                context.Evaluate(call.Target);
+
+            if (targetObject is not IQslFunction function)
+            {
+                var targetName =
+                    call.Target is QslIdentifierNode identifier
+                        ? identifier.Name
+                        : call.Target.ToString() ?? "<unknown>";
+
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    $"Identifier '{targetName}' is not callable."
+                );
+
+                return null;
+            }
+
+            var arguments = call.Arguments
+                .Select(argument =>
+                    context.Evaluate(argument))
+                .ToArray();
+
+            return function.Invoke(
+                arguments,
+                context);
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 050: Core\Runtime\Evaluators\QslEmbeddedEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Evaluators\QslEmbeddedEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Evaluators
+{
+    public sealed class QslEmbeddedEvaluator :
+        QslRegistryItem,
+        IQslEvaluator
+    {
+        public override string Type => "evaluator";
+        public override string Name => "embedded";
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node is not QslEmbeddedNode embedded)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Embedded evaluator received an incompatible node."
+                );
+
+                return null;
+            }
+
+            return context.Evaluate(
+                embedded.InnerExpression
+            );
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 051: Core\Runtime\Evaluators\QslErrorEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Evaluators\QslErrorEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Evaluators
+{
+    public sealed class QslErrorEvaluator : QslRegistryItem, IQslEvaluator
+    {
+        public override string Type => "evaluator";
+
+        public override string Name => nameof(QslErrorEvaluator);
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node is not QslErrorNode error)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    $"Expected {nameof(QslErrorNode)} but received {node.GetType().Name}."
+                );
+
+                return null;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                error.Message
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 052: Core\Runtime\Evaluators\QslIdentifierEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Evaluators\QslIdentifierEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Evaluators
+{
+    public sealed class QslIdentifierEvaluator :
+        QslRegistryItem,
+        IQslEvaluator
+    {
+        public override string Type => "evaluator";
+
+        public override string Name => "identifier";
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node is not QslIdentifierNode identifier)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Identifier evaluator received an incompatible node."
+                );
+
+                return null;
+            }
+
+            return context.ResolveIdentifier(
+                identifier.Name);
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 053: Core\Runtime\Evaluators\QslLiteralEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Evaluators\QslLiteralEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Ast.Types;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Evaluators
+{
+    public sealed class QslLiteralEvaluator :
+        QslRegistryItem,
+        IQslEvaluator
+    {
+        public override string Type => "evaluator";
+
+        public override string Name => "literal";
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node is not QslLiteralNode literal)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Literal evaluator received an incompatible node."
+                );
+
+                return null;
+            }
+
+            return literal.LiteralKind switch
+            {
+                QslLiteralKind.Number =>
+                    Convert.ToDouble(literal.Value),
+
+                QslLiteralKind.String =>
+                    literal.Value?.ToString(),
+
+                QslLiteralKind.Boolean =>
+                    Convert.ToBoolean(literal.Value),
+
+                QslLiteralKind.Null =>
+                    null,
+
+                QslLiteralKind.Vector =>
+                    (Vector)literal.Value!,
+
+                QslLiteralKind.Velocity =>
+                    (Velocity)literal.Value!,
+
+                _ =>
+                    literal.Value
+            };
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 054: Core\Runtime\Evaluators\QslMemberAccessEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Evaluators\QslMemberAccessEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Evaluators
+{
+    public sealed class QslMemberAccessEvaluator :
+        QslRegistryItem,
+        IQslEvaluator
+    {
+        public override string Type => "evaluator";
+
+        public override string Name => "member-access";
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node is not QslMemberAccessNode memberNode)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Member-access evaluator received an incompatible node."
+                );
+
+                return null;
+            }
+
+            var targetValue = context.Evaluate(memberNode.Target);
+
+            if (targetValue is null)
+            {
+                Report(
+                    memberNode,
+                    "Target evaluated to null."
+                );
+
+                return null;
+            }
+
+            // Capability member access
+            if (targetValue is IQslCapability capability)
+            {
+                var method = capability
+                    .GetType()
+                    .GetMethod(memberNode.MemberName);
+
+                if (method is not null)
+                    return method;
+
+                Report(
+                    memberNode,
+                    $"Capability '{capability.Name}' has no " +
+                    $"member '{memberNode.MemberName}'."
+                );
+
+                return null;
+            }
+
+            // Descriptor member access
+            if (targetValue is IQslDescriptor descriptor)
+            {
+                descriptor.Apply(context);
+
+                var resolved = context.ResolveIdentifier(
+                    memberNode.MemberName
+                );
+
+                if (resolved is not null)
+                    return resolved;
+
+                Report(
+                    memberNode,
+                    $"Member '{memberNode.MemberName}' not found " +
+                    $"on descriptor '{descriptor.Name}'."
+                );
+
+                return null;
+            }
+
+            // Plain-object property access
+            var targetType = targetValue.GetType();
+
+            var property = targetType.GetProperty(
+                memberNode.MemberName
+            );
+
+            if (property is not null)
+            {
+                return property.GetValue(
+                    targetValue,
+                    null
+                );
+            }
+
+            // Plain-object field access
+            var field = targetType.GetField(
+                memberNode.MemberName
+            );
+
+            if (field is not null)
+                return field.GetValue(targetValue);
+
+            Report(
+                memberNode,
+                $"Member '{memberNode.MemberName}' not found " +
+                $"on object of type '{targetType.Name}'."
+            );
+
+            return null;
+        }
+
+        private void Report(
+            QslMemberAccessNode memberNode,
+            string message)
+        {
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                $"{message} " +
+                $"(target: '{memberNode.Target}', " +
+                $"member: '{memberNode.MemberName}')"
+            );
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 055: Core\Runtime\Evaluators\QslTernaryEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Evaluators\QslTernaryEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Evaluators
+{
+    public sealed class QslTernaryEvaluator :
+        QslRegistryItem,
+        IQslEvaluator
+    {
+        public override string Type => "evaluator";
+        public override string Name => "ternary";
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node is not QslTernaryNode ternary)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Ternary evaluator received an incompatible node."
+                );
+
+                return null;
+            }
+
+            var conditionValue =
+                context.Evaluate(ternary.Condition);
+
+            if (conditionValue is not bool condition)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Ternary condition must evaluate to a boolean."
+                );
+
+                return null;
+            }
+
+            if (condition)
+            {
+                return context.Evaluate(
+                    ternary.TrueExpr
+                );
+            }
+
+            return context.Evaluate(
+                ternary.FalseExpr
+            );
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 056: Core\Runtime\Evaluators\QslUnaryEvaluator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Evaluators\QslUnaryEvaluator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+using QSL.Core.Runtime.Operators;
+
+namespace QSL.Core.Runtime.Evaluators
+{
+    public sealed class QslUnaryEvaluator :
+        QslRegistryItem,
+        IQslEvaluator
+    {
+        public override string Type => "evaluator";
+        public override string Name => "unary";
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node is not QslUnaryNode unary)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    "Unary evaluator received an incompatible node."
+                );
+
+                return null;
+            }
+
+            var operandValue =
+                context.Evaluate(unary.Operand);
+
+            var executor =
+                QslOperatorResolver.Resolve(
+                    unary.OperatorKind);
+
+            return executor.ApplyUnary(
+                operandValue,
+                context
+            );
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 057: Core\Runtime\Functions\ApplyForceFunction.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Functions\ApplyForceFunction.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Base;
+
+public sealed class ApplyForceFunction : QslRegistryItem, IQslFunction
+{
+    private readonly PhysicsCapability _capability;
+
+    public ApplyForceFunction(PhysicsCapability capability)
+    {
+        _capability = capability;
+    }
+
+    public override string Type => "function";
+    public override string Name => "ApplyForce";
+
+    public object? Invoke(object?[] args, QslRuntimeContext context)
+    {
+        // Delegate to the capabilityÃ¢â‚¬â„¢s ApplyForce method
+        return _capability.ApplyForce(args, context);
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 058: Core\Runtime\Functions\DampenVelocityFunction.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Functions\DampenVelocityFunction.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+public sealed class DampenVelocityFunction :
+    QslRegistryItem,
+    IQslFunction
+{
+    public override string Type => "function";
+
+    public override string Name => "DampenVelocity";
+
+    public object? Invoke(
+        object?[] args,
+        QslRuntimeContext context)
+    {
+        if (args.Length == 2 &&
+            args[0] is Velocity velocity &&
+            args[1] is double factor)
+        {
+            var dampened =
+                velocity.Scale(factor);
+
+            context.SetVariable(
+                "LastDampenedVelocity",
+                dampened
+            );
+
+            AddProvenance(
+                QslProvenanceType.Info,
+                QslProvenanceCategory.Capability,
+                Name,
+                $"Dampened velocity {velocity} by factor {factor}"
+            );
+
+            return dampened;
+        }
+
+        AddProvenance(
+            QslProvenanceType.Error,
+            QslProvenanceCategory.Capability,
+            Name,
+            "DampenVelocity requires (Velocity, double) arguments."
+        );
+
+        return null;
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 059: Core\Runtime\Functions\HealFunction.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Functions\HealFunction.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+public sealed class HealFunction : QslRegistryItem, IQslFunction
+{
+    public override string Type => "function";
+    public override string Name => "heal";
+
+    public object? Invoke(
+        object?[] args,
+        QslRuntimeContext context)
+    {
+        if (args.Length == 1)
+        {
+            int amount = args[0] switch
+            {
+                int i    => i,
+                double d => (int)d,
+                _        => 0
+            };
+
+            var resolved =
+                context.ResolveIdentifier("health");
+
+            var current =
+                resolved is int h
+                    ? h
+                    : Convert.ToInt32(resolved ?? 0);
+
+            var newHealth =
+                current + amount;
+
+            context.SetVariable(
+                "health",
+                newHealth);
+
+            return newHealth;
+        }
+
+        AddProvenance(
+            QslProvenanceType.Error,
+            QslProvenanceCategory.Evaluation,
+            Name,
+            "HealFunction requires one numeric argument."
+        );
+
+        return null;
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 060: Core\Runtime\Functions\QslMethodFunction.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Functions\QslMethodFunction.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Reflection;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Functions
+{
+    public sealed class QslMethodFunction : QslRegistryItem, IQslFunction
+    {
+        private readonly object _target;
+        private readonly MethodInfo _method;
+
+        public QslMethodFunction(object target, MethodInfo method)
+        {
+            _target = target;
+            _method = method;
+        }
+
+        public override string Type => "function";
+        public override string Name => _method.Name;
+
+        public object? Invoke(object?[] args, QslRuntimeContext context)
+        {
+            try
+            {
+                return _method.Invoke(_target, args);
+            }
+            catch (Exception ex)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    $"Error invoking method '{_method.Name}' on '{_target.GetType().Name}': {ex.Message}"
+                );
+
+                return null;
+            }
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 061: Core\Runtime\Operators\QslAddOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslAddOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslAddOperator : QslOperatorBase
+    {
+        public override string Name => "+";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (left is int leftInteger &&
+                right is int rightInteger)
+            {
+                return leftInteger + rightInteger;
+            }
+
+            if (left is double leftNumber &&
+                right is double rightNumber)
+            {
+                return leftNumber + rightNumber;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '+' requires numeric operands of compatible types."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 062: Core\Runtime\Operators\QslAndOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslAndOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Provenance;
+using QSL.Core.Runtime;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslAndOperator : QslOperatorBase
+    {
+        public override string Type => "operator";
+        public override string Name => "&&";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (left is bool leftBoolean &&
+                right is bool rightBoolean)
+            {
+                return leftBoolean && rightBoolean;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '&&' requires boolean operands."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 063: Core\Runtime\Operators\QslDivideOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslDivideOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslDivideOperator : QslOperatorBase
+    {
+        public override string Name => "/";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (left is int leftInteger &&
+                right is int rightInteger)
+            {
+                if (rightInteger == 0)
+                {
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        Name,
+                        "Division by zero is not allowed."
+                    );
+
+                    return null;
+                }
+
+                return leftInteger / rightInteger;
+            }
+
+            if (left is double leftNumber &&
+                right is double rightNumber)
+            {
+                if (rightNumber == 0.0)
+                {
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        Name,
+                        "Division by zero is not allowed."
+                    );
+
+                    return null;
+                }
+
+                return leftNumber / rightNumber;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '/' requires numeric operands of compatible types."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 064: Core\Runtime\Operators\QslEqualOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslEqualOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Runtime;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslEqualOperator : QslOperatorBase
+    {
+        public override string Type => "operator";
+        public override string Name => "==";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            return Equals(left, right);
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 065: Core\Runtime\Operators\QslGreaterEqualOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslGreaterEqualOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using QSL.Core.Provenance;
+using QSL.Core.Runtime;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslGreaterEqualOperator : QslOperatorBase
+    {
+        public override string Type => "operator";
+        public override string Name => ">=";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (TryCompare(left, right, out var comparison))
+                return comparison >= 0;
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '>=' requires comparable operands of compatible types."
+            );
+
+            return null;
+        }
+
+        private static bool TryCompare(
+            object? left,
+            object? right,
+            out int comparison)
+        {
+            comparison = 0;
+
+            if (left is null || right is null)
+                return false;
+
+            if (left.GetType() != right.GetType())
+                return false;
+
+            if (left is not IComparable comparable)
+                return false;
+
+            comparison = comparable.CompareTo(right);
+
+            return true;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 066: Core\Runtime\Operators\QslGreaterOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslGreaterOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslGreaterOperator : QslOperatorBase
+    {
+        public override string Type => "operator";
+        public override string Name => ">";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (TryCompare(left, right, out var comparison))
+                return comparison > 0;
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '>' requires comparable operands of compatible types."
+            );
+
+            return null;
+        }
+
+        private static bool TryCompare(
+            object? left,
+            object? right,
+            out int comparison)
+        {
+            comparison = 0;
+
+            if (left is null || right is null)
+                return false;
+
+            if (left.GetType() != right.GetType())
+                return false;
+
+            if (left is not IComparable comparable)
+                return false;
+
+            comparison = comparable.CompareTo(right);
+            return true;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 067: Core\Runtime\Operators\QslLessEqualOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslLessEqualOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslLessEqualOperator : QslOperatorBase
+    {
+        public override string Type => "operator";
+        public override string Name => "<=";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (TryCompare(left, right, out var comparison))
+                return comparison <= 0;
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '<=' requires comparable operands of compatible types."
+            );
+
+            return null;
+        }
+
+        private static bool TryCompare(
+            object? left,
+            object? right,
+            out int comparison)
+        {
+            comparison = 0;
+
+            if (left is null || right is null)
+                return false;
+
+            if (left.GetType() != right.GetType())
+                return false;
+
+            if (left is not IComparable comparable)
+                return false;
+
+            comparison = comparable.CompareTo(right);
+            return true;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 068: Core\Runtime\Operators\QslLessOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslLessOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslLessOperator : QslOperatorBase
+    {
+        public override string Type => "operator";
+        public override string Name => "<";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (TryCompare(left, right, out var comparison))
+                return comparison < 0;
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '<' requires comparable operands of compatible types."
+            );
+
+            return null;
+        }
+
+        private static bool TryCompare(
+            object? left,
+            object? right,
+            out int comparison)
+        {
+            comparison = 0;
+
+            if (left is null || right is null)
+                return false;
+
+            if (left.GetType() != right.GetType())
+                return false;
+
+            if (left is not IComparable comparable)
+                return false;
+
+            comparison = comparable.CompareTo(right);
+            return true;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 069: Core\Runtime\Operators\QslModuloOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslModuloOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslModuloOperator : QslOperatorBase
+    {
+        public override string Name => "%";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (left is int leftInteger &&
+                right is int rightInteger)
+            {
+                if (rightInteger == 0)
+                {
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        Name,
+                        "Modulo by zero is not allowed."
+                    );
+
+                    return null;
+                }
+
+                return leftInteger % rightInteger;
+            }
+
+            if (left is double leftNumber &&
+                right is double rightNumber)
+            {
+                if (rightNumber == 0.0)
+                {
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        Name,
+                        "Modulo by zero is not allowed."
+                    );
+
+                    return null;
+                }
+
+                return leftNumber % rightNumber;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '%' requires numeric operands of compatible types."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 070: Core\Runtime\Operators\QslMultiplyOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslMultiplyOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslMultiplyOperator : QslOperatorBase
+    {
+        public override string Name => "*";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (left is int leftInteger &&
+                right is int rightInteger)
+            {
+                return leftInteger * rightInteger;
+            }
+
+            if (left is double leftNumber &&
+                right is double rightNumber)
+            {
+                return leftNumber * rightNumber;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '*' requires numeric operands of compatible types."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 071: Core\Runtime\Operators\QslNotEqualOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslNotEqualOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Runtime;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslNotEqualOperator : QslOperatorBase
+    {
+        public override string Type => "operator";
+        public override string Name => "!=";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            return !Equals(left, right);
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 072: Core\Runtime\Operators\QslNotOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslNotOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslNotOperator : QslOperatorBase
+    {
+        public override string Type => "operator";
+        public override string Name => "!";
+
+        public override object? ApplyUnary(
+            object? operand,
+            QslRuntimeContext context)
+        {
+            if (operand is bool value)
+                return !value;
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Unary '!' requires a boolean operand."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 073: Core\Runtime\Operators\QslNullCoalescingOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslNullCoalescingOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslNullCoalescingOperator : QslOperatorBase
+    {
+        public override string Type => "operator";
+        public override string Name => "??";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            return left ?? right;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 074: Core\Runtime\Operators\QslOperatorBase.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslOperatorBase.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public abstract class QslOperatorBase :
+        QslRegistryItem,
+        IQslOperator
+    {
+        public override string Type => "operator";
+
+        public virtual object? ApplyUnary(
+            object? operand,
+            QslRuntimeContext context)
+        {
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                $"Operator '{Name}' does not support unary application."
+            );
+
+            return null;
+        }
+
+        public virtual object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                $"Operator '{Name}' does not support binary application."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 075: Core\Runtime\Operators\QslOperatorResolver.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslOperatorResolver.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Lexer;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public static class QslOperatorResolver
+    {
+        private static readonly Dictionary<
+            QslTokenKind,
+            IQslOperator> Instances =
+                new Dictionary<QslTokenKind, IQslOperator>();
+
+        public static IQslOperator Resolve(
+            QslTokenKind operatorKind)
+        {
+            IQslOperator existing;
+
+            if (Instances.TryGetValue(
+                    operatorKind,
+                    out existing))
+            {
+                return existing;
+            }
+
+            var executorType =
+                QslKindExtensions.ExecutorType(
+                    operatorKind);
+
+            if (!typeof(IQslOperator).IsAssignableFrom(
+                    executorType))
+            {
+                throw new InvalidOperationException(
+                    $"Executor type '{executorType.FullName}' " +
+                    $"for QslTokenKind.{operatorKind} does not " +
+                    $"implement {nameof(IQslOperator)}.");
+            }
+
+            var constructor =
+                executorType.GetConstructor(Type.EmptyTypes);
+
+            if (constructor == null)
+            {
+                throw new InvalidOperationException(
+                    $"Executor type '{executorType.FullName}' " +
+                    $"for QslTokenKind.{operatorKind} must have " +
+                    "a public parameterless constructor.");
+            }
+
+            var instance =
+                Activator.CreateInstance(executorType)
+                as IQslOperator;
+
+            if (instance == null)
+            {
+                throw new InvalidOperationException(
+                    $"Unable to create executor " +
+                    $"'{executorType.FullName}' for " +
+                    $"QslTokenKind.{operatorKind}.");
+            }
+
+            Instances.Add(
+                operatorKind,
+                instance);
+
+            return instance;
+        }
+
+        public static bool IsResolved(
+            QslTokenKind operatorKind)
+        {
+            return Instances.ContainsKey(
+                operatorKind);
+        }
+
+        public static void Clear()
+        {
+            Instances.Clear();
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 076: Core\Runtime\Operators\QslOrOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslOrOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Provenance;
+using QSL.Core.Runtime;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslOrOperator : QslOperatorBase
+    {
+        public override string Type => "operator";
+        public override string Name => "||";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (left is bool leftBoolean &&
+                right is bool rightBoolean)
+            {
+                return leftBoolean || rightBoolean;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '||' requires boolean operands."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 077: Core\Runtime\Operators\QslSubtractOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\Operators\QslSubtractOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslSubtractOperator : QslOperatorBase
+    {
+        public override string Name => "-";
+
+        public override object? ApplyUnary(
+            object? operand,
+            QslRuntimeContext context)
+        {
+            if (operand is int integer)
+                return -integer;
+
+            if (operand is double number)
+                return -number;
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Unary '-' requires a numeric operand."
+            );
+
+            return null;
+        }
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (left is int leftInteger &&
+                right is int rightInteger)
+            {
+                return leftInteger - rightInteger;
+            }
+
+            if (left is double leftNumber &&
+                right is double rightNumber)
+            {
+                return leftNumber - rightNumber;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '-' requires numeric operands of compatible types."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 078: Core\Runtime\QslRuntime.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\QslRuntime.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime
+{
+    public sealed class QslRuntime
+    {
+        public static QslRuntime Instance { get; } = new QslRuntime();
+
+        // Provenance bus (streaming, indexing, filtering, export)
+        public QslProvenanceBus ProvenanceBus { get; } = new QslProvenanceBus();
+
+        // Runtime registry (operators, functions, descriptors, capabilities, evaluators, block factories)
+        public QslRuntimeRegistry Registry { get; }
+
+        // Global runtime context (variables, state)
+        public QslRuntimeContext Context { get; }
+
+        private QslRuntime()
+        {
+            Registry = new QslRuntimeRegistry();
+            Registry.RegisterDefaultEvaluators();
+
+            Context = new QslRuntimeContext(Registry);
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 079: Core\Runtime\QslRuntimeRegistry.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Runtime\QslRuntimeRegistry.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using QSL.Abstractions.Base;
+using QSL.Abstractions.Runtime;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+using QSL.Core.Base;
+using QSL.Core.Provenance;
+using QSL.Core.Runtime.Evaluators;
+
+namespace QSL.Core.Runtime
+{
+    public sealed class QslRuntimeRegistry : QslBaseObject
+    {
+        private readonly Dictionary<string, IQslOperator> _operators
+            = new();
+
+        private readonly Dictionary<string, IQslFunction> _functions
+            = new();
+
+        private readonly Dictionary<string, IQslDescriptor> _descriptors
+            = new();
+
+        private readonly Dictionary<string, IQslCapability> _capabilities
+            = new();
+
+        private readonly Dictionary<QslNodeKind, IQslEvaluator> _evaluators
+            = new();
+
+        private readonly Dictionary<string, IQslBlockFactory> _blockFactories
+            = new();
+
+        public override string Type => "registry";
+
+        public IReadOnlyDictionary<string, IQslOperator> Operators
+            => _operators;
+
+        public IReadOnlyDictionary<string, IQslFunction> Functions
+            => _functions;
+
+        public IReadOnlyDictionary<string, IQslDescriptor> Descriptors
+            => _descriptors;
+
+        public IReadOnlyDictionary<string, IQslCapability> Capabilities
+            => _capabilities;
+
+        public IReadOnlyDictionary<QslNodeKind, IQslEvaluator> Evaluators
+            => _evaluators;
+
+        public IReadOnlyDictionary<string, IQslBlockFactory> BlockFactories
+            => _blockFactories;
+
+        public void RegisterDefaultEvaluators()
+        {
+            RegisterEvaluator(
+                QslNodeKind.Literal,
+                new QslLiteralEvaluator());
+
+            RegisterEvaluator(
+                QslNodeKind.Identifier,
+                new QslIdentifierEvaluator());
+
+            RegisterEvaluator(
+                QslNodeKind.Unary,
+                new QslUnaryEvaluator());
+
+            RegisterEvaluator(
+                QslNodeKind.Binary,
+                new QslBinaryEvaluator());
+
+            RegisterEvaluator(
+                QslNodeKind.Call,
+                new QslCallEvaluator());
+
+            RegisterEvaluator(
+                QslNodeKind.Embedded,
+                new QslEmbeddedEvaluator());
+
+            RegisterEvaluator(
+                QslNodeKind.Block,
+                new QslBlockEvaluator());
+
+            RegisterEvaluator(
+                QslNodeKind.Error,
+                new QslErrorEvaluator());
+
+            RegisterEvaluator(
+                QslNodeKind.MemberAccess,
+                new QslMemberAccessEvaluator());
+
+            RegisterEvaluator(
+                QslNodeKind.Ternary,
+                new QslTernaryEvaluator());
+        }
+
+        public void RegisterType(IQslObject obj)
+        {
+            if (obj == null)
+                throw new ArgumentNullException(nameof(obj));
+
+            if (obj is QslRuntimeObject runtimeObject)
+            {
+                runtimeObject.AppendSlug(
+                    $"{runtimeObject.Type}-{runtimeObject.Name}");
+            }
+
+            switch (obj)
+            {
+                case IQslFunction function:
+                    Register(
+                        _functions,
+                        function.Name,
+                        function,
+                        "function");
+                    return;
+
+                case IQslCapability capability:
+                    Register(
+                        _capabilities,
+                        capability.Name,
+                        capability,
+                        "capability");
+                    return;
+
+                case IQslDescriptor descriptor:
+                    Register(
+                        _descriptors,
+                        descriptor.Name,
+                        descriptor,
+                        "descriptor");
+                    return;
+
+                case IQslOperator op:
+                    Register(
+                        _operators,
+                        op.Name,
+                        op,
+                        "operator");
+                    return;
+
+                case IQslEvaluator evaluator:
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        nameof(QslRuntimeRegistry),
+                        $"Evaluator '{evaluator.Name}' requires a node-kind registration."
+                    );
+                    return;
+
+                case IQslBlockFactory blockFactory:
+                    Register(
+                        _blockFactories,
+                        blockFactory.Name,
+                        blockFactory,
+                        "block-factory");
+                    return;
+
+                default:
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        nameof(QslRuntimeRegistry),
+                        $"Unsupported QSL registry type: {obj.GetType().Name}"
+                    );
+                    return;
+            }
+        }
+
+        public void RegisterEvaluator(
+            QslNodeKind kind,
+            IQslEvaluator evaluator)
+        {
+            if (evaluator == null)
+                throw new ArgumentNullException(nameof(evaluator));
+
+            if (evaluator is QslRuntimeObject runtimeObject)
+            {
+                runtimeObject.AppendSlug(
+                    $"{runtimeObject.Type}-{runtimeObject.Name}");
+            }
+
+            if (_evaluators.ContainsKey(kind))
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    nameof(QslRuntimeRegistry),
+                    $"Evaluator already registered for node kind: {kind}"
+                );
+
+                return;
+            }
+
+            _evaluators.Add(
+                kind,
+                evaluator);
+        }
+
+        public object? Evaluate(
+            IQslNode node,
+            QslRuntimeContext context)
+        {
+            if (node == null)
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    nameof(QslRuntimeRegistry),
+                    "Cannot evaluate a null node."
+                );
+
+                return null;
+            }
+
+            if (_evaluators.TryGetValue(
+                    node.Kind,
+                    out var evaluator))
+            {
+                return evaluator.Evaluate(
+                    node,
+                    context);
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                nameof(QslRuntimeRegistry),
+                $"No evaluator registered for node kind: {node.Kind}"
+            );
+
+            return null;
+        }
+
+        private void Register<T>(
+            Dictionary<string, T> registry,
+            string key,
+            T item,
+            string itemType)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    nameof(QslRuntimeRegistry),
+                    $"Cannot register {itemType} with an empty name."
+                );
+
+                return;
+            }
+
+            if (registry.ContainsKey(key))
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    nameof(QslRuntimeRegistry),
+                    $"{itemType} '{key}' is already registered."
+                );
+
+                return;
+            }
+
+            registry.Add(
+                key,
+                item);
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 080: Core\Surface\QslEngine.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Surface\QslEngine.cs
+
+SOURCE:
+------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Lexer;
+using QSL.Core.Parser;
+using QSL.Core.Provenance;
+
+namespace QSL.Core
+{
+    public sealed class QslEngine
+    {
+        private readonly QslRuntimeContext _context;
+
+        public QslEngine(QslRuntimeContext context)
+        {
+            _context = context
+                ?? throw new ArgumentNullException(nameof(context));
+        }
+
+        public QslParseResult Parse(string source)
+        {
+            var tokenizer = new QslTokenizer(source);
+            var tokens = tokenizer.Tokenize();
+
+            var parser = new QslParser(tokens);
+            var ast = parser.ParseExpression();
+
+            return new QslParseResult(
+                ast,
+                parser.Errors
+            );
+        }
+
+        public QslProcessingResult Evaluate(string source)
+        {
+            try
+            {
+                var parseResult = Parse(source);
+
+                if (parseResult.HasDiagnostics)
+                {
+                    return QslProcessingResult.ParseFailure(
+                        parseResult.Ast,
+                        parseResult.Diagnostics
+                    );
+                }
+
+                var value = _context.Evaluate(
+                    parseResult.Ast
+                );
+
+                return QslProcessingResult.Success(
+                    parseResult.Ast,
+                    value
+                );
+            }
+            catch (Exception exception)
+            {
+                return QslProcessingResult.ExceptionFailure(
+                    exception
+                );
+            }
+        }
+    }
+
+    public sealed class QslParseResult
+    {
+        public IQslNode Ast { get; }
+
+        public IReadOnlyList<string> Diagnostics { get; }
+
+        public bool HasDiagnostics =>
+            Diagnostics.Count > 0;
+
+        public QslParseResult(
+            IQslNode ast,
+            IReadOnlyList<string> diagnostics)
+        {
+            Ast = ast;
+            Diagnostics = diagnostics;
+        }
+    }
+
+    public sealed class QslProcessingResult
+    {
+        public IQslNode? Ast { get; }
+
+        public object? Value { get; }
+
+        public IReadOnlyList<string> ParserDiagnostics { get; }
+
+        public Exception? Exception { get; }
+
+        public bool ParseFailed =>
+            ParserDiagnostics.Count > 0;
+
+        public bool HasException =>
+            Exception is not null;
+
+        public bool Succeeded =>
+            !ParseFailed &&
+            !HasException;
+
+        private QslProcessingResult(
+            IQslNode? ast,
+            object? value,
+            IReadOnlyList<string> parserDiagnostics,
+            Exception? exception)
+        {
+            Ast = ast;
+            Value = value;
+            ParserDiagnostics = parserDiagnostics;
+            Exception = exception;
+        }
+
+        public static QslProcessingResult Success(
+            IQslNode ast,
+            object? value)
+        {
+            return new QslProcessingResult(
+                ast,
+                value,
+                Array.Empty<string>(),
+                null
+            );
+        }
+
+        public static QslProcessingResult ParseFailure(
+            IQslNode ast,
+            IReadOnlyList<string> diagnostics)
+        {
+            return new QslProcessingResult(
+                ast,
+                null,
+                diagnostics,
+                null
+            );
+        }
+
+        public static QslProcessingResult ExceptionFailure(
+            Exception exception)
+        {
+            return new QslProcessingResult(
+                null,
+                null,
+                Array.Empty<string>(),
+                exception
+            );
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 081: QSL_Fixup_Backup_20261023_002323\Core\Runtime\Operators\QslDivideOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\QSL_Fixup_Backup_20261023_002323\Core\Runtime\Operators\QslDivideOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslDivideOperator : QslOperatorBase
+    {
+        public override string Name => "/";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (left is double leftNumber &&
+                right is double rightNumber)
+            {
+                if (rightNumber == 0.0)
+                {
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        Name,
+                        "Division by zero is not allowed."
+                    );
+
+                    return null;
+                }
+
+                return leftNumber / rightNumber;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '/' requires numeric operands of compatible types."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 082: QSL_Fixup_Backup_20261023_002323\Core\Runtime\Operators\QslModuloOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\QSL_Fixup_Backup_20261023_002323\Core\Runtime\Operators\QslModuloOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslModuloOperator : QslOperatorBase
+    {
+        public override string Name => "%";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (left is double leftNumber &&
+                right is double rightNumber)
+            {
+                if (rightNumber == 0.0)
+                {
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        Name,
+                        "Modulo by zero is not allowed."
+                    );
+
+                    return null;
+                }
+
+                return leftNumber % rightNumber;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '%' requires numeric operands of compatible types."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+FILE 083: QSL_Fixup_Backup_20261023_002323\Core\Runtime\Operators\QslMultiplyOperator.cs
+============================================================
+STATUS: REVIEW
+
+FULL PATH:
+C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\QSL_Fixup_Backup_20261023_002323\Core\Runtime\Operators\QslMultiplyOperator.cs
+
+SOURCE:
+------------------------------------------------------------
+using QSL.Abstractions.Runtime;
+using QSL.Core.Provenance;
+
+namespace QSL.Core.Runtime.Operators
+{
+    public sealed class QslMultiplyOperator : QslOperatorBase
+    {
+        public override string Name => "*";
+
+        public override object? ApplyBinary(
+            object? left,
+            object? right,
+            QslRuntimeContext context)
+        {
+            if (left is double leftNumber &&
+                right is double rightNumber)
+            {
+                return leftNumber * rightNumber;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                Name,
+                "Binary '*' requires numeric operands of compatible types."
+            );
+
+            return null;
+        }
+    }
+}
+------------------------------------------------------------
+
+============================================================
+END OF QSL CORE ARCHITECTURE AUDIT
+============================================================
+
+FILES COLLECTED: 83
+
+NEXT PHASE AFTER AUDIT:
+  - Apply only verified Core corrections
+  - Complete namespace and Unity compatibility passes
+  - Run the provenance-aware 200/200 QSL stress suite
+  - Perform final silent-failure, ambiguity, evaluator,
+    metadata, and determinism certification
+

@@ -1,0 +1,341 @@
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Abstractions\Contracts\IQslNode.cs
+============================================================
+using QSL.Abstractions.Base;
+using QSL.Core.Ast;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Abstractions.Runtime
+{
+    public interface IQslNode : IQslObject
+    {
+        QslNodeKind Kind { get; }
+    }
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslBinaryNode.cs
+============================================================
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+using QSL.Core.Lexer;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslBinaryNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Binary;
+
+        public QslTokenKind OperatorKind { get; }
+        public IQslNode Left { get; }
+        public IQslNode Right { get; }
+
+        public QslBinaryNode(
+            QslTokenKind operatorKind,
+            IQslNode left,
+            IQslNode right)
+        {
+            OperatorKind = operatorKind;
+            Left = left;
+            Right = right;
+        }
+    }
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslBlockNode.cs
+============================================================
+using System.Collections.Generic;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslBlockNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Block;
+
+        public IReadOnlyList<IQslNode> Statements { get; }
+
+        public QslBlockNode(IReadOnlyList<IQslNode> statements)
+        {
+            Statements = statements;
+        }
+    }
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslCallNode.cs
+============================================================
+using System.Collections.Generic;
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslCallNode : QslNode
+    {
+        public override QslNodeKind Kind =>
+            QslNodeKind.Call;
+
+        public IQslNode Target { get; }
+
+        public IReadOnlyList<IQslNode> Arguments { get; }
+
+        public QslCallNode(
+            IQslNode target,
+            IReadOnlyList<IQslNode> arguments)
+        {
+            Target = target;
+            Arguments = arguments;
+        }
+    }
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslEmbeddedNode.cs
+============================================================
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslEmbeddedNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Embedded;
+
+        public IQslNode InnerExpression { get; init; }
+
+        public QslEmbeddedNode(IQslNode inner)
+        {
+            InnerExpression = inner;
+        }
+    }
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslErrorNode.cs
+============================================================
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslErrorNode : QslNode
+    {
+        public override QslNodeKind Kind =>
+            QslNodeKind.Error;
+
+        public string Message { get; }
+
+        public QslErrorNode(string message)
+        {
+            Message = message;
+        }
+
+        public override string ToString()
+        {
+            return $"Error: {Message}";
+        }
+    }
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslIdentifierNode.cs
+============================================================
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslIdentifierNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Identifier;
+
+        public string Name { get; init; }
+
+        public QslIdentifierNode(string name)
+        {
+            Name = name;
+        }
+    }
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslLiteralNode.cs
+============================================================
+using QSL.Core.Ast;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslLiteralNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Literal;
+
+        public QslLiteralKind LiteralKind { get; init; }
+        public object? Value { get; init; }
+
+        public QslLiteralNode(QslLiteralKind kind, object? value)
+        {
+            LiteralKind = kind;
+            Value = value;
+        }
+    }
+}
+
+
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslMemberAccessNode.cs
+============================================================
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslMemberAccessNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.MemberAccess;
+
+        public IQslNode Target { get; init; }
+        public string MemberName { get; init; }
+
+        public QslMemberAccessNode(IQslNode target, string memberName)
+        {
+            Target = target;
+            MemberName = memberName;
+        }
+    }    
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslNode.cs
+============================================================
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+using QSL.Core.Base;
+
+namespace QSL.Core.Ast
+{
+    public abstract class QslNode : QslBaseObject, IQslNode
+    {
+        public abstract QslNodeKind Kind { get; }
+        public override string Type => "node";
+    }
+}
+
+
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslTernaryNode.cs
+============================================================
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslTernaryNode : QslNode
+    {
+        public override QslNodeKind Kind =>
+            QslNodeKind.Ternary;
+
+        public IQslNode Condition { get; }
+
+        public IQslNode TrueExpr { get; }
+
+        public IQslNode FalseExpr { get; }
+
+        public QslTernaryNode(
+            IQslNode condition,
+            IQslNode trueExpr,
+            IQslNode falseExpr)
+        {
+            Condition = condition;
+            TrueExpr = trueExpr;
+            FalseExpr = falseExpr;
+        }
+    }
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\QslUnaryNode.cs
+============================================================
+using QSL.Abstractions.Runtime;
+using QSL.Core.Ast.Types;
+using QSL.Core.Lexer;
+
+namespace QSL.Core.Ast
+{
+    public sealed class QslUnaryNode : QslNode
+    {
+        public override QslNodeKind Kind => QslNodeKind.Unary;
+
+        public QslTokenKind OperatorKind { get; }
+        public IQslNode Operand { get; }
+
+        public QslUnaryNode(
+            QslTokenKind operatorKind,
+            IQslNode operand)
+        {
+            OperatorKind = operatorKind;
+            Operand = operand;
+        }
+    }
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\Types\QslEvaluationStrategy.cs
+============================================================
+namespace QSL.Core.Lexer
+{
+    public enum QslEvaluationStrategy
+    {
+        Eager,
+        ShortCircuitAnd,
+        ShortCircuitOr,
+        NullCoalescing,
+        Arrow,
+        Assignment
+    }
+}
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\Types\QslLiteralKind.cs
+============================================================
+namespace QSL.Core.Ast.Types
+{
+    public enum QslLiteralKind
+    {
+        Number,
+        String,
+        Boolean,
+        Null,
+        Vector,
+        Velocity
+    }
+}
+
+
+
+============================================================
+FILE: C:\Users\jmatt\source\repos\QSL Script UI\Assets\QSL\QSL\Core\Ast\Types\QslNodeKind.cs
+============================================================
+namespace QSL.Core.Ast.Types
+{
+    public enum QslNodeKind
+    {
+        Literal,
+        Identifier,
+        Unary,
+        Binary,
+        Call,
+        Embedded,
+        Block,
+        Error,
+        MemberAccess,
+        Ternary
+    }
+}
+
+
+

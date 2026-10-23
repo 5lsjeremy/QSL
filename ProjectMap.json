@@ -1,0 +1,448 @@
+[
+    {
+        "Usings":  {
+
+                   },
+        "Namespace":  "QSL.Abstractions.Context",
+        "File":  "\\Abstractions\\Contracts\\IContextBase.cs",
+        "Inherits":  {
+
+                     },
+        "Types":  {
+                      "Kind":  "interface",
+                      "Name":  "IContextBase"
+                  }
+    },
+    {
+        "Usings":  {
+
+                   },
+        "Namespace":  "QSL.Abstractions.Base",
+        "File":  "\\Abstractions\\Contracts\\IQslBlock.cs",
+        "Inherits":  "IQslObject",
+        "Types":  {
+                      "Kind":  "interface",
+                      "Name":  "IQslBlock"
+                  }
+    },
+    {
+        "Usings":  [
+                       "QSL.Abstractions.Base",
+                       "QSL.Abstractions.Runtime"
+                   ],
+        "Namespace":  "QSL.Abstractions.Base",
+        "File":  "\\Abstractions\\Contracts\\IQslEvaluator.cs",
+        "Inherits":  "IQslRegistryItem",
+        "Types":  {
+                      "Kind":  "interface",
+                      "Name":  "IQslEvaluator"
+                  }
+    },
+    {
+        "Usings":  [
+                       "QSL.Abstractions.Base",
+                       "QSL.Core.Ast"
+                   ],
+        "Namespace":  "QSL.Abstractions.Runtime",
+        "File":  "\\Abstractions\\Contracts\\IQslNode.cs",
+        "Inherits":  "IQslObject",
+        "Types":  {
+                      "Kind":  "interface",
+                      "Name":  "IQslNode"
+                  }
+    },
+    {
+        "Usings":  "QSL.Core.Provenance",
+        "Namespace":  "QSL.Abstractions.Base",
+        "File":  "\\Abstractions\\Contracts\\IQSLObject.cs",
+        "Inherits":  {
+
+                     },
+        "Types":  {
+                      "Kind":  "interface",
+                      "Name":  "IQslObject"
+                  }
+    },
+    {
+        "Usings":  "QSL.Abstractions.Base",
+        "Namespace":  "QSL.Abstractions.Runtime",
+        "File":  "\\Abstractions\\Contracts\\IQslOperator.cs",
+        "Inherits":  "IQslRegistryItem",
+        "Types":  {
+                      "Kind":  "interface",
+                      "Name":  "IQslOperator"
+                  }
+    },
+    {
+        "Usings":  "QSL.Abstractions.Runtime",
+        "Namespace":  "QSL.Abstractions.Base",
+        "File":  "\\Abstractions\\Contracts\\IQslRegistryItem.cs",
+        "Inherits":  [
+                         "IQslRuntimeObject",
+                         "IQslRegistryItem",
+                         "IQslRegistryItem",
+                         "IQslRegistryItem",
+                         "IQslRegistryItem",
+                         "IQslRegistryItem",
+                         "IQslObject"
+                     ],
+        "Types":  [
+                      {
+                          "Kind":  "interface",
+                          "Name":  "IQslRegistryItem"
+                      },
+                      {
+                          "Kind":  "interface",
+                          "Name":  "IQslFunction"
+                      },
+                      {
+                          "Kind":  "interface",
+                          "Name":  "IQslDescriptor"
+                      },
+                      {
+                          "Kind":  "interface",
+                          "Name":  "IQslCapability"
+                      },
+                      {
+                          "Kind":  "interface",
+                          "Name":  "IQslEvaluator"
+                      },
+                      {
+                          "Kind":  "interface",
+                          "Name":  "IQslBlockFactory"
+                      },
+                      {
+                          "Kind":  "interface",
+                          "Name":  "IQslBlock"
+                      }
+                  ]
+    },
+    {
+        "Usings":  {
+
+                   },
+        "Namespace":  "QSL.Abstractions.Base",
+        "File":  "\\Abstractions\\Contracts\\IQslRuntimeObject.cs",
+        "Inherits":  "IQslObject",
+        "Types":  {
+                      "Kind":  "interface",
+                      "Name":  "IQslRuntimeObject"
+                  }
+    },
+    {
+        "Usings":  "QSL.Abstractions.Runtime",
+        "Namespace":  "QSL.Core.Ast",
+        "File":  "\\Core\\AST\\QslBinaryNode.cs",
+        "Inherits":  "QslNode",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslBinaryNode"
+                  }
+    },
+    {
+        "Usings":  "QSL.Abstractions.Runtime",
+        "Namespace":  "QSL.Core.Ast",
+        "File":  "\\Core\\AST\\QslCallNode.cs",
+        "Inherits":  "QslNode",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslCallNode"
+                  }
+    },
+    {
+        "Usings":  "QSL.Abstractions.Runtime",
+        "Namespace":  "QSL.Core.Ast",
+        "File":  "\\Core\\AST\\QslEmbeddedNode.cs",
+        "Inherits":  "QslNode",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslEmbeddedNode"
+                  }
+    },
+    {
+        "Usings":  {
+
+                   },
+        "Namespace":  "QSL.Core.Ast",
+        "File":  "\\Core\\AST\\QslIdentifierNode.cs",
+        "Inherits":  "QslNode",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslIdentifierNode"
+                  }
+    },
+    {
+        "Usings":  "QSL.Core.Ast",
+        "Namespace":  "QSL.Core.Ast",
+        "File":  "\\Core\\AST\\QslLiteralNode.cs",
+        "Inherits":  "QslNode",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslLiteralNode"
+                  }
+    },
+    {
+        "Usings":  "QSL.Abstractions.Runtime",
+        "Namespace":  "QSL.Core.Ast",
+        "File":  "\\Core\\AST\\QslNode.cs",
+        "Inherits":  "QslBaseObject, IQslNode",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslNode"
+                  }
+    },
+    {
+        "Usings":  "QSL.Abstractions.Runtime",
+        "Namespace":  "QSL.Core.Ast",
+        "File":  "\\Core\\AST\\QslUnaryNode.cs",
+        "Inherits":  "QslNode",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslUnaryNode"
+                  }
+    },
+    {
+        "Usings":  {
+
+                   },
+        "Namespace":  "QSL.Core.Ast",
+        "File":  "\\Core\\AST\\Types\\QslLiteralKind.cs",
+        "Inherits":  {
+
+                     },
+        "Types":  {
+
+                  }
+    },
+    {
+        "Usings":  {
+
+                   },
+        "Namespace":  "QSL.Core.Ast",
+        "File":  "\\Core\\AST\\Types\\QslNodeKind.cs",
+        "Inherits":  {
+
+                     },
+        "Types":  {
+
+                  }
+    },
+    {
+        "Usings":  [
+                       "QSL.Abstractions.Base",
+                       "QSL.Core.Base",
+                       "QSL.Core.Provenance",
+                       "QSL.Core.Runtime"
+                   ],
+        "Namespace":  "",
+        "File":  "\\Core\\Base\\QslBaseObject.cs",
+        "Inherits":  "IQslObject",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslBaseObject"
+                  }
+    },
+    {
+        "Usings":  "QSL.Abstractions.Base",
+        "Namespace":  "QSL.Core.Base",
+        "File":  "\\Core\\Base\\QslBlockBase.cs",
+        "Inherits":  "QslBaseObject, IQslBlock",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslBlockBase"
+                  }
+    },
+    {
+        "Usings":  "QSL.Abstractions.Base",
+        "Namespace":  "QSL.Core.Base",
+        "File":  "\\Core\\Base\\QslRegistryItem.cs",
+        "Inherits":  "QslRuntimeObject, IQslRegistryItem",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslRegistryItem"
+                  }
+    },
+    {
+        "Usings":  "QSL.Abstractions.Base",
+        "Namespace":  "QSL.Core.Base",
+        "File":  "\\Core\\Base\\QslRuntimeObject.cs",
+        "Inherits":  "QslBaseObject, IQslRuntimeObject",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslRuntimeObject"
+                  }
+    },
+    {
+        "Usings":  {
+
+                   },
+        "Namespace":  "QSL.Core.Base",
+        "File":  "\\Core\\Extensions\\QslGuidExtensions.cs",
+        "Inherits":  {
+
+                     },
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslGuidExtensions"
+                  }
+    },
+    {
+        "Usings":  {
+
+                   },
+        "Namespace":  "QSL.Core.Ast",
+        "File":  "\\Core\\Lexer\\QslTokenKind.cs",
+        "Inherits":  {
+
+                     },
+        "Types":  {
+
+                  }
+    },
+    {
+        "Usings":  [
+                       "QSL.Abstractions.Base",
+                       "QSL.Core.Provenance"
+                   ],
+        "Namespace":  "",
+        "File":  "\\Core\\Provenance\\QslProvenanceBus.cs",
+        "Inherits":  [
+                         "Enumerable",
+                         "Enumerable",
+                         "Enumerable",
+                         "Enumerable",
+                         "GetAll"
+                     ],
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslProvenanceBus"
+                  }
+    },
+    {
+        "Usings":  "QSL.Core.Provenance",
+        "Namespace":  "",
+        "File":  "\\Core\\Provenance\\QslProvenanceEntry.cs",
+        "Inherits":  "QslBaseObject",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslProvenanceEntry"
+                  }
+    },
+    {
+        "Usings":  {
+
+                   },
+        "Namespace":  "QSL.Core.Provenance",
+        "File":  "\\Core\\Provenance\\QslProvenanceType.cs",
+        "Inherits":  {
+
+                     },
+        "Types":  {
+
+                  }
+    },
+    {
+        "Usings":  "QSL.Core.Provenance",
+        "Namespace":  "QSL.Core.Runtime",
+        "File":  "\\Core\\Runtime\\QslRuntime.cs",
+        "Inherits":  "global runtime context",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslRuntime"
+                  }
+    },
+    {
+        "Usings":  "QSL.Core.Runtime",
+        "Namespace":  "",
+        "File":  "\\Core\\Runtime\\QSLRuntimeContext.cs",
+        "Inherits":  "QslContextBase",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslRuntimeContext"
+                  }
+    },
+    {
+        "Usings":  [
+                       "QSL.Abstractions.Base.QSL.Abstractions.Runtime",
+                       "QSL.Abstractions.Runtime"
+                   ],
+        "Namespace":  "QSL.Core.Runtime",
+        "File":  "\\Core\\Runtime\\QslRuntimeRegistry.cs",
+        "Inherits":  "QslBaseObject",
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslRuntimeRegistry"
+                  }
+    },
+    {
+        "Usings":  [
+                       "QSL.Abstractions.Context",
+                       "QSL.Core.Provenance"
+                   ],
+        "Namespace":  "",
+        "File":  "\\Core\\Runtime\\Context\\QslContextBase.cs",
+        "Inherits":  [
+                         "QslBaseObject, IContextBase",
+                         "",
+                         ""
+                     ],
+        "Types":  {
+                      "Kind":  "class",
+                      "Name":  "QslContextBase"
+                  }
+    },
+    {
+        "Usings":  [
+                       "System",
+                       "System.Reflection"
+                   ],
+        "Namespace":  "",
+        "File":  "\\obj\\Debug\\net10.0\\.NETCoreApp,Version=v10.0.AssemblyAttributes.cs",
+        "Inherits":  [
+                         "global",
+                         "System"
+                     ],
+        "Types":  {
+
+                  }
+    },
+    {
+        "Usings":  [
+                       "System",
+                       "System.Reflection"
+                   ],
+        "Namespace":  "",
+        "File":  "\\obj\\Debug\\net10.0\\QSL.AssemblyInfo.cs",
+        "Inherits":  [
+                         "System",
+                         "System",
+                         "System",
+                         "System",
+                         "System",
+                         "System",
+                         "System"
+                     ],
+        "Types":  {
+
+                  }
+    },
+    {
+        "Usings":  [
+                       "System",
+                       "System.Collections.Generic",
+                       "System.IO",
+                       "System.Linq",
+                       "System.Net.Http",
+                       "System.Threading",
+                       "System.Threading.Tasks"
+                   ],
+        "Namespace":  "",
+        "File":  "\\obj\\Debug\\net10.0\\QSL.GlobalUsings.g.cs",
+        "Inherits":  {
+
+                     },
+        "Types":  {
+
+                  }
+    }
+]
