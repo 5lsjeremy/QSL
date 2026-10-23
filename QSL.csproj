@@ -5,10 +5,17 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>9.0</LangVersion>
+
+        <DefaultItemExcludes>
+            $(DefaultItemExcludes);
+            QSL.Cli\**
+        </DefaultItemExcludes>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="System.Text.Json" Version="8.0.5" />
+        <PackageReference
+                Include="System.Text.Json"
+                Version="8.0.5" />
     </ItemGroup>
 
 </Project>
