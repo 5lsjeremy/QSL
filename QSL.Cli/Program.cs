@@ -1,57 +1,43 @@
-﻿using System;
-using System.Globalization;
-using QSL.Core;
+﻿using QSL.Core;
 using QSL.Core.Provenance;
 using QSL.Core.Runtime;
 
 internal static class Program
 {
-    private static void Main()
+    private static int Main(
+        string[] args)
     {
-        var registry =
-            new QslRuntimeRegistry();
+        if (args.Length > 0)
+        {
+            if (string.Equals(
+                    args[0],
+                    "certify",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return CertificationRunner.Run();
+            }
 
-        registry.RegisterDefaultEvaluators();
-
-        registry.RegisterType(
-            new HealFunction()
-        );
-
-        registry.RegisterType(
-            new VectorFunction()
-        );
-
-        var physicsCapability =
-            new PhysicsCapability();
-
-        registry.RegisterType(
-            physicsCapability
-        );
-
-        var playerDescriptor =
-            new PlayerDescriptor();
-
-        registry.RegisterType(
-            playerDescriptor
-        );
-
-        var context =
-            new QslRuntimeContext(
-                registry
+            Console.Error.WriteLine(
+                "Unknown command: " +
+                args[0]
             );
 
-        physicsCapability.Apply(
-            context
-        );
-
-        playerDescriptor.Apply(
-            context
-        );
-
-        var engine =
-            new QslEngine(
-                context
+            Console.Error.WriteLine(
+                "Available command: certify"
             );
+
+            return 2;
+        }
+
+        RunInteractive();
+
+        return 0;
+    }
+
+    private static void RunInteractive()
+    {
+        var host =
+            QslCliHost.Create();
 
         WriteBanner();
 
@@ -115,7 +101,7 @@ internal static class Program
                     StringComparison.OrdinalIgnoreCase))
             {
                 WriteState(
-                    context
+                    host.Context
                 );
 
                 continue;
@@ -130,8 +116,26 @@ internal static class Program
                 continue;
             }
 
+            if (string.Equals(
+                    source,
+                    "certify",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                var exitCode =
+                    CertificationRunner.Run();
+
+                Console.WriteLine();
+                Console.WriteLine(
+                    "Certification exit code: " +
+                    exitCode
+                );
+
+                Console.WriteLine();
+                continue;
+            }
+
             Evaluate(
-                engine,
+                host.Engine,
                 source
             );
         }
@@ -153,7 +157,7 @@ internal static class Program
         if (result.Succeeded)
         {
             Console.WriteLine(
-                FormatValue(
+                QslValueFormatter.Format(
                     result.Value
                 )
             );
@@ -262,7 +266,11 @@ internal static class Program
         );
 
         Console.WriteLine(
-            "  provenance  Show all provenance entries."
+            "  provenance  Show provenance entries."
+        );
+
+        Console.WriteLine(
+            "  certify     Run the certification suite."
         );
 
         Console.WriteLine(
@@ -271,43 +279,6 @@ internal static class Program
 
         Console.WriteLine(
             "  exit        Exit the CLI."
-        );
-
-        Console.WriteLine();
-        Console.WriteLine(
-            "Examples:"
-        );
-
-        Console.WriteLine(
-            "  1 + 2"
-        );
-
-        Console.WriteLine(
-            "  health"
-        );
-
-        Console.WriteLine(
-            "  health = 75"
-        );
-
-        Console.WriteLine(
-            "  heal(10)"
-        );
-
-        Console.WriteLine(
-            "  Vector(10, 20)"
-        );
-
-        Console.WriteLine(
-            "  Vector(10, 20, 30)"
-        );
-
-        Console.WriteLine(
-            "  ApplyForce(\"Player\", Vector(10, 0))"
-        );
-
-        Console.WriteLine(
-            "  \"Health: $(health)\""
         );
 
         Console.WriteLine();
@@ -338,7 +309,7 @@ internal static class Program
                 "  " +
                 pair.Key +
                 " = " +
-                FormatValue(
+                QslValueFormatter.Format(
                     pair.Value
                 )
             );
@@ -393,49 +364,5 @@ internal static class Program
         }
 
         Console.WriteLine();
-    }
-
-    private static string FormatValue(
-        object? value)
-    {
-        if (value is null)
-        {
-            return "null";
-        }
-
-        if (value is bool boolean)
-        {
-            return boolean
-                ? "true"
-                : "false";
-        }
-
-        if (value is double number)
-        {
-            return number.ToString(
-                "0.################",
-                CultureInfo.InvariantCulture
-            );
-        }
-
-        if (value is float single)
-        {
-            return single.ToString(
-                "0.################",
-                CultureInfo.InvariantCulture
-            );
-        }
-
-        if (value is IFormattable formattable)
-        {
-            return formattable.ToString(
-                       null,
-                       CultureInfo.InvariantCulture
-                   )
-                   ?? string.Empty;
-        }
-
-        return value.ToString()
-               ?? string.Empty;
     }
 }

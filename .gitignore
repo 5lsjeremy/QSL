@@ -11,6 +11,9 @@ obj/
 # Unity metadata
 *.meta
 
+# QSL generated certification output
+qsl_statement_testing_output.json
+
 # OS
 .DS_Store
 Thumbs.db
