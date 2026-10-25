@@ -1,10 +1,11 @@
-using QSL.Abstractions.Runtime;
+﻿using QSL.Abstractions.Runtime;
 using QSL.Core.Base;
 using QSL.Core.Provenance;
+using QSL.Core.Runtime.Context;
 
 namespace QSL.Core.Runtime.Operators
 {
-    public abstract class QslOperatorBase :
+    internal abstract class QslOperatorBase :
         QslRegistryItem,
         IQslOperator
     {

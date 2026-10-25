@@ -1,3 +1,4 @@
+using QSL.Core.Ast.Types;
 using QSL.Core.Runtime.Operators;
 
 namespace QSL.Core.Lexer

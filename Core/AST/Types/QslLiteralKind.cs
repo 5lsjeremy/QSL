@@ -5,9 +5,7 @@ namespace QSL.Core.Ast.Types
         Number,
         String,
         Boolean,
-        Null,
-        Vector,
-        Velocity
+        Null
     }
 }
 

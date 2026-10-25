@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using QSL.Core.Ast.Types;
 
 namespace QSL.Core.Lexer
 {

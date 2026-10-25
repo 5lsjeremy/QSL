@@ -5,10 +5,11 @@ using QSL.Core.Ast;
 using QSL.Core.Ast.Types;
 using QSL.Core.Base;
 using QSL.Core.Provenance;
+using QSL.Core.Runtime.Context;
 
 namespace QSL.Core.Runtime.Evaluators
 {
-    public sealed class QslLiteralEvaluator :
+    internal  sealed class QslLiteralEvaluator :
         QslRegistryItem,
         IQslEvaluator
     {
@@ -45,12 +46,6 @@ namespace QSL.Core.Runtime.Evaluators
 
                 QslLiteralKind.Null =>
                     null,
-
-                QslLiteralKind.Vector =>
-                    (Vector)literal.Value!,
-
-                QslLiteralKind.Velocity =>
-                    (Velocity)literal.Value!,
 
                 _ =>
                     literal.Value

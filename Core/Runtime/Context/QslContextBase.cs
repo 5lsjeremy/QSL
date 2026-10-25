@@ -3,7 +3,7 @@ using QSL.Abstractions.Context;
 using QSL.Core.Base;
 using QSL.Core.Provenance;
 
-namespace QSL.Core.Base
+namespace QSL.Core.Runtime.Context
 {
     public abstract class QslContextBase : QslBaseObject, IContextBase
     {

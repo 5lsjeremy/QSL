@@ -1,10 +1,11 @@
 ﻿using QSL.Abstractions.Runtime;
 using QSL.Core.Provenance;
+using QSL.Core.Runtime.Context;
 using QSL.Core.Runtime.Helpers;
 
 namespace QSL.Core.Runtime.Operators
 {
-    public sealed class QslSubtractOperator :
+    internal sealed class QslSubtractOperator :
         QslOperatorBase
     {
         public override string Name =>

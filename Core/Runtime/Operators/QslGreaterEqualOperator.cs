@@ -1,10 +1,11 @@
 ﻿using System;
 using QSL.Core.Provenance;
+using QSL.Core.Runtime.Context;
 using QSL.Core.Runtime.Helpers;
 
 namespace QSL.Core.Runtime.Operators
 {
-    public sealed class QslGreaterEqualOperator :
+    internal sealed class QslGreaterEqualOperator :
         QslOperatorBase
     {
         public override string Name =>

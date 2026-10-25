@@ -7,7 +7,7 @@ using QSL.Core.Lexer;
 
 namespace QSL.Core.Parser
 {
-    public sealed class QslParser
+    internal sealed class QslParser
     {
         private readonly List<QslToken> _tokens;
         private readonly List<string> _errors =

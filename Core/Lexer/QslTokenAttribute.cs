@@ -1,4 +1,5 @@
 ﻿using System;
+using QSL.Core.Ast.Types;
 
 namespace QSL.Core.Lexer
 {

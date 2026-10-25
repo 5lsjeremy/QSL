@@ -1,14 +1,16 @@
 using QSL.Abstractions.Base;
 using QSL.Abstractions.Runtime;
 using QSL.Core.Ast;
+using QSL.Core.Ast.Types;
 using QSL.Core.Base;
 using QSL.Core.Lexer;
 using QSL.Core.Provenance;
+using QSL.Core.Runtime.Context;
 using QSL.Core.Runtime.Operators;
 
 namespace QSL.Core.Runtime.Evaluators
 {
-    public sealed class QslBinaryEvaluator :
+    internal  sealed class QslBinaryEvaluator :
         QslRegistryItem,
         IQslEvaluator
     {

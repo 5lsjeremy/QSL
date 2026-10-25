@@ -1,8 +1,9 @@
-﻿using QSL.Core.Runtime.Helpers;
+﻿using QSL.Core.Runtime.Context;
+using QSL.Core.Runtime.Helpers;
 
 namespace QSL.Core.Runtime.Operators
 {
-    public sealed class QslNotEqualOperator :
+    internal sealed class QslNotEqualOperator :
         QslOperatorBase
     {
         public override string Name =>
