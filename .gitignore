@@ -14,6 +14,9 @@ obj/
 # QSL generated certification output
 qsl_statement_testing_output.json
 
+# QSL generated audit reports
+Audit/Reports/
+
 # OS
 .DS_Store
 Thumbs.db
