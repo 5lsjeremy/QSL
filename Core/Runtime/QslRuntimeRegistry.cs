@@ -26,9 +26,6 @@ namespace QSL.Core.Runtime
         private readonly Dictionary<QslNodeKind, IQslEvaluator> _evaluators
             = new();
 
-        private readonly Dictionary<string, IQslBlockFactory> _blockFactories
-            = new();
-
         public override string Type => "registry";
 
         public IReadOnlyDictionary<string, IQslOperator> Operators
@@ -45,9 +42,6 @@ namespace QSL.Core.Runtime
 
         public IReadOnlyDictionary<QslNodeKind, IQslEvaluator> Evaluators
             => _evaluators;
-
-        public IReadOnlyDictionary<string, IQslBlockFactory> BlockFactories
-            => _blockFactories;
 
         public void RegisterDefaultEvaluators()
         {
@@ -149,14 +143,6 @@ namespace QSL.Core.Runtime
                         nameof(QslRuntimeRegistry),
                         $"Evaluator '{evaluator.Name}' requires a node-kind registration."
                     );
-                    return;
-
-                case IQslBlockFactory blockFactory:
-                    Register(
-                        _blockFactories,
-                        blockFactory.Name,
-                        blockFactory,
-                        "block-factory");
                     return;
 
                 default:
