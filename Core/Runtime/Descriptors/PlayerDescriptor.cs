@@ -1,42 +1,19 @@
-using System;
 using QSL.Abstractions.Runtime;
 using QSL.Core.Base;
+using QSL.Core.Runtime.Context;
 
-public sealed class PlayerDescriptor : QslRegistryItem, IQslDescriptor
+namespace QSL.Core.Runtime.Descriptors
 {
-    public override string Name => "Player";
-    public override string Type => "descriptor";
-
-    public void Apply(QslRuntimeContext context)
+    public sealed class PlayerDescriptor : QslRegistryItem, IQslDescriptor
     {
-        context.SetVariable("health", 100);
-        context.SetVariable("mana", 50);
-    }
-}
+        public override string Name => "Player";
+        public override string Type => "descriptor";
 
-
-
-public sealed class NPCDescriptor : QslRegistryItem, IQslDescriptor
-{
-    public override string Name => "NPC";
-    public override string Type => "descriptor";
-
-    public void Apply(QslRuntimeContext context)
-    {
-        context.SetVariable("npc.health", 50);
-        context.SetVariable("npc.aggression", 0.25);
-    }
-}
-
-public sealed class EntityDescriptor : QslRegistryItem, IQslDescriptor
-{
-    public override string Name => "Entity";
-    public override string Type => "descriptor";
-
-    public void Apply(QslRuntimeContext context)
-    {
-        context.SetVariable("entity.id", Guid.NewGuid().ToString());
-        context.SetVariable("entity.active", true);
+        public void Apply(QslRuntimeContext context)
+        {
+            context.SetVariable("health", 100);
+            context.SetVariable("mana", 50);
+        }
     }
 }
 

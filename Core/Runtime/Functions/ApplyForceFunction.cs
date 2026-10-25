@@ -2,22 +2,26 @@ using System;
 using System.Collections.Generic;
 using QSL.Abstractions.Runtime;
 using QSL.Core.Base;
-
-public sealed class ApplyForceFunction : QslRegistryItem, IQslFunction
+using QSL.Core.Runtime.Capabilities;
+using QSL.Core.Runtime.Context;
+namespace QSL.Core.Runtime.Functions
 {
-    private readonly PhysicsCapability _capability;
-
-    public ApplyForceFunction(PhysicsCapability capability)
+    public sealed class ApplyForceFunction : QslRegistryItem, IQslFunction
     {
-        _capability = capability;
-    }
+        private readonly PhysicsCapability _capability;
 
-    public override string Type => "function";
-    public override string Name => "ApplyForce";
+        public ApplyForceFunction(PhysicsCapability capability)
+        {
+            _capability = capability;
+        }
 
-    public object? Invoke(object?[] args, QslRuntimeContext context)
-    {
-        // Delegate to the capabilityâ€™s ApplyForce method
-        return _capability.ApplyForce(args, context);
+        public override string Type => "function";
+        public override string Name => "ApplyForce";
+
+        public object? Invoke(object?[] args, QslRuntimeContext context)
+        {
+            // Delegate to the capabilityâ€™s ApplyForce method
+            return _capability.ApplyForce(args, context);
+        }
     }
 }

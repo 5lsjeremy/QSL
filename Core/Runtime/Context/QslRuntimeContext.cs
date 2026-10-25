@@ -1,71 +1,72 @@
 using QSL.Abstractions.Runtime;
-using QSL.Core.Base;
 using QSL.Core.Provenance;
-using QSL.Core.Runtime;
 
-public sealed class QslRuntimeContext : QslContextBase
+namespace QSL.Core.Runtime.Context
 {
-    public QslRuntimeRegistry Registry { get; }
-
-    public QslRuntimeContext(QslRuntimeRegistry registry)
+    public sealed class QslRuntimeContext : QslContextBase
     {
-        Registry = registry;
-    }
+        public QslRuntimeRegistry Registry { get; }
 
-    public override string Type => "runtime-context";
-
-    public object? Evaluate(IQslNode node)
-    {
-        var key = node.Kind;
-
-        if (Registry.Evaluators.TryGetValue(key, out var evaluator))
-            return evaluator.Evaluate(node, this);
-
-        AddProvenance(
-            QslProvenanceType.Error,
-            QslProvenanceCategory.Evaluation,
-            "QslRuntimeContext",
-            $"No evaluator registered for node kind: {key}"
-        );
-
-        return null;
-    }
-
-    public object? ResolveIdentifier(string idName)
-    {
-        if (string.IsNullOrEmpty(idName))
+        public QslRuntimeContext(QslRuntimeRegistry registry)
         {
+            Registry = registry;
+        }
+
+        public override string Type => "runtime-context";
+
+        public object? Evaluate(IQslNode node)
+        {
+            var key = node.Kind;
+
+            if (Registry.Evaluators.TryGetValue(key, out var evaluator))
+                return evaluator.Evaluate(node, this);
+
             AddProvenance(
                 QslProvenanceType.Error,
                 QslProvenanceCategory.Evaluation,
                 "QslRuntimeContext",
-                "Attempted to resolve a null/empty identifier."
+                $"No evaluator registered for node kind: {key}"
             );
 
             return null;
         }
 
-        var variable = GetVariable(idName);
+        public object? ResolveIdentifier(string idName)
+        {
+            if (string.IsNullOrEmpty(idName))
+            {
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    "QslRuntimeContext",
+                    "Attempted to resolve a null/empty identifier."
+                );
 
-        if (variable != null)
-            return variable;
+                return null;
+            }
 
-        if (Registry.Functions.TryGetValue(idName, out var function))
-            return function;
+            var variable = GetVariable(idName);
 
-        if (Registry.Descriptors.TryGetValue(idName, out var descriptor))
-            return descriptor;
+            if (variable != null)
+                return variable;
 
-        if (Registry.Capabilities.TryGetValue(idName, out var capability))
-            return capability;
+            if (Registry.Functions.TryGetValue(idName, out var function))
+                return function;
 
-        AddProvenance(
-            QslProvenanceType.Error,
-            QslProvenanceCategory.Evaluation,
-            "QslRuntimeContext",
-            $"Unresolved identifier: {idName}"
-        );
+            if (Registry.Descriptors.TryGetValue(idName, out var descriptor))
+                return descriptor;
 
-        return null;
+            if (Registry.Capabilities.TryGetValue(idName, out var capability))
+                return capability;
+
+            AddProvenance(
+                QslProvenanceType.Error,
+                QslProvenanceCategory.Evaluation,
+                "QslRuntimeContext",
+                $"Unresolved identifier: {idName}"
+            );
+
+            return null;
+        }
     }
 }

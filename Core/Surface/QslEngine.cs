@@ -5,6 +5,7 @@ using QSL.Core.Lexer;
 using QSL.Core.Parser;
 using QSL.Core.Provenance;
 using QSL.Core.Runtime;
+using QSL.Core.Runtime.Context;
 
 namespace QSL.Core
 {

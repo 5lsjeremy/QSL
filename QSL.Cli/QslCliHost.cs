@@ -1,5 +1,9 @@
 ﻿using QSL.Core;
 using QSL.Core.Runtime;
+using QSL.Core.Runtime.Capabilities;
+using QSL.Core.Runtime.Context;
+using QSL.Core.Runtime.Descriptors;
+using QSL.Core.Runtime.Functions;
 
 internal sealed class QslCliHost
 {

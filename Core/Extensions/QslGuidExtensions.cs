@@ -1,6 +1,6 @@
 using System;
 
-namespace QSL.Core.Base
+namespace QSL.Core.Extensions
 {
     public static class QslGuidExtensions
     {

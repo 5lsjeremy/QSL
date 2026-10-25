@@ -1,4 +1,4 @@
-﻿namespace QSL.Core.Lexer
+﻿namespace QSL.Core.Ast.Types
 {
     public enum QslEvaluationStrategy
     {
