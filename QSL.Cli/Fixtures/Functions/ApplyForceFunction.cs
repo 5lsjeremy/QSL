@@ -1,10 +1,8 @@
-using System;
-using System.Collections.Generic;
-using QSL.Abstractions.Runtime;
+﻿using QSL.Abstractions.Runtime;
+using QSL.Cli.Fixtures.Capabilities;
 using QSL.Core.Base;
-using QSL.Core.Runtime.Capabilities;
 using QSL.Core.Runtime.Context;
-namespace QSL.Core.Runtime.Functions
+namespace QSL.Cli.Fixtures.Functions
 {
     public sealed class ApplyForceFunction : QslRegistryItem, IQslFunction
     {
@@ -20,7 +18,7 @@ namespace QSL.Core.Runtime.Functions
 
         public object? Invoke(object?[] args, QslRuntimeContext context)
         {
-            // Delegate to the capabilityâ€™s ApplyForce method
+            // Delegate to the capabilityÃ¢â‚¬â„¢s ApplyForce method
             return _capability.ApplyForce(args, context);
         }
     }

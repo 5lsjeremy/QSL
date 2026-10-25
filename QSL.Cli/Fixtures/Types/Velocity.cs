@@ -1,4 +1,4 @@
-﻿namespace QSL.Core.Custom
+﻿namespace QSL.Cli.Fixtures.Types
 {
     public sealed class Velocity
     {

@@ -1,10 +1,10 @@
-using QSL.Abstractions.Runtime;
+﻿using QSL.Abstractions.Runtime;
+using QSL.Cli.Fixtures.Types;
 using QSL.Core.Base;
-using QSL.Core.Custom;
 using QSL.Core.Provenance;
 using QSL.Core.Runtime.Context;
 
-namespace QSL.Core.Runtime.Functions
+namespace QSL.Cli.Fixtures.Functions
 {
     public sealed class DampenVelocityFunction :
         QslRegistryItem,

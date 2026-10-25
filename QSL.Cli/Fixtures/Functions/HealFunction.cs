@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using QSL.Abstractions.Runtime;
 using QSL.Core.Base;
 using QSL.Core.Provenance;
 using QSL.Core.Runtime.Context;
 
-namespace QSL.Core.Runtime.Functions
+namespace QSL.Cli.Fixtures.Functions
 {
     public sealed class HealFunction :
         QslRegistryItem,

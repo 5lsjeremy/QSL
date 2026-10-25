@@ -142,6 +142,15 @@ function Get-PreliminaryCategory {
     }
 
     if (
+    $TypeName -eq "QslTokenKind" -or
+            $TypeName -eq "QslTokenAttribute" -or
+            $TypeName -eq "QslKindExtensions" -or
+            $TypeName -eq "QslEvaluationStrategy"
+    ) {
+        return "PUBLIC LANGUAGE METADATA"
+    }
+
+    if (
     $TypeName -eq "QslEngine" -or
             $TypeName -eq "QslParseResult" -or
             $TypeName -eq "QslProcessingResult"
@@ -298,6 +307,7 @@ $Categories = @(
     "PUBLIC INTEGRATION",
     "PUBLIC EXTENSION",
     "PUBLIC CONTRACT",
+    "PUBLIC LANGUAGE METADATA",
     "PUBLIC DATA/DIAGNOSTICS",
     "PUBLIC SAMPLE/INTEGRATION",
     "IMPLEMENTATION CANDIDATE",

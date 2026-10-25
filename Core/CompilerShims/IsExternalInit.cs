@@ -2,6 +2,6 @@
 namespace System.Runtime.CompilerServices
 {
     [AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = false)]
-    public sealed class IsExternalInit : Attribute { }
+    internal sealed class IsExternalInit : Attribute { }
 }
 #endif

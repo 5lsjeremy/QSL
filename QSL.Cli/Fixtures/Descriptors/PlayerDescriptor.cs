@@ -1,8 +1,8 @@
-using QSL.Abstractions.Runtime;
+﻿using QSL.Abstractions.Runtime;
 using QSL.Core.Base;
 using QSL.Core.Runtime.Context;
 
-namespace QSL.Core.Runtime.Descriptors
+namespace QSL.Cli.Fixtures.Descriptors
 {
     public sealed class PlayerDescriptor : QslRegistryItem, IQslDescriptor
     {
@@ -16,4 +16,3 @@ namespace QSL.Core.Runtime.Descriptors
         }
     }
 }
-

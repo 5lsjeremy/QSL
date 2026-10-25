@@ -1,11 +1,11 @@
-using QSL.Abstractions.Runtime;
+﻿using QSL.Abstractions.Runtime;
+using QSL.Cli.Fixtures.Functions;
+using QSL.Cli.Fixtures.Types;
 using QSL.Core.Base;
-using QSL.Core.Custom;
 using QSL.Core.Provenance;
 using QSL.Core.Runtime.Context;
-using QSL.Core.Runtime.Functions;
 
-namespace QSL.Core.Runtime.Capabilities
+namespace QSL.Cli.Fixtures.Capabilities
 {
     public sealed class PhysicsCapability : QslRegistryItem, IQslCapability
     {

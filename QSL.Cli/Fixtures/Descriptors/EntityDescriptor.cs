@@ -3,7 +3,7 @@ using QSL.Abstractions.Runtime;
 using QSL.Core.Base;
 using QSL.Core.Runtime.Context;
 
-namespace QSL.Core.Runtime.Descriptors
+namespace QSL.Cli.Fixtures.Descriptors
 {
     public sealed class EntityDescriptor : QslRegistryItem, IQslDescriptor
     {

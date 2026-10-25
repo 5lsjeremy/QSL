@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 
 namespace QSL.Core.Extensions
 {
-    public static class QslGuidExtensions
+    internal static class QslGuidExtensions
     {
         public static string ToSlug(this Guid guid)
         {

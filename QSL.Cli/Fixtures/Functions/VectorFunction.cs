@@ -1,11 +1,11 @@
 ﻿using QSL.Abstractions.Runtime;
+using QSL.Cli.Fixtures.Helpers;
+using QSL.Cli.Fixtures.Types;
 using QSL.Core.Base;
-using QSL.Core.Custom;
 using QSL.Core.Provenance;
 using QSL.Core.Runtime.Context;
-using QSL.Core.Runtime.Helpers;
 
-namespace QSL.Core.Runtime.Functions
+namespace QSL.Cli.Fixtures.Functions
 {
     public sealed class VectorFunction :
         QslRegistryItem,
@@ -28,7 +28,7 @@ namespace QSL.Core.Runtime.Functions
                 return null;
             }
 
-            if (!QslNumeric.TryConvert(
+            if (!FixtureNumeric.TryConvert(
                     args[0],
                     out var x))
             {
@@ -36,7 +36,7 @@ namespace QSL.Core.Runtime.Functions
                 return null;
             }
 
-            if (!QslNumeric.TryConvert(
+            if (!FixtureNumeric.TryConvert(
                     args[1],
                     out var y))
             {
@@ -52,7 +52,7 @@ namespace QSL.Core.Runtime.Functions
                 );
             }
 
-            if (!QslNumeric.TryConvert(
+            if (!FixtureNumeric.TryConvert(
                     args[2],
                     out var z))
             {
