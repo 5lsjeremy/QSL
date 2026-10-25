@@ -17,13 +17,29 @@ internal static class Program
                 return CertificationRunner.Run();
             }
 
+            if (string.Equals(
+                    args[0],
+                    "audit-ast-coverage",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return AstCoverageAuditRunner.Run();
+            }
+
             Console.Error.WriteLine(
                 "Unknown command: " +
                 args[0]
             );
 
             Console.Error.WriteLine(
-                "Available command: certify"
+                "Available commands:"
+            );
+
+            Console.Error.WriteLine(
+                "  certify"
+            );
+
+            Console.Error.WriteLine(
+                "  audit-ast-coverage"
             );
 
             return 2;
