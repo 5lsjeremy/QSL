@@ -5,7 +5,7 @@ using QSL.Core.Runtime.Helpers;
 
 namespace QSL.Core.Runtime.Operators
 {
-    public sealed class QslGreaterOperator :
+    internal sealed class QslGreaterOperator :
         QslOperatorBase
     {
         public override string Name =>

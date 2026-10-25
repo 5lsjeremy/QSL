@@ -4,7 +4,7 @@ using QSL.Core.Runtime.Context;
 
 namespace QSL.Core.Runtime.Operators
 {
-    public sealed class QslNotOperator : QslOperatorBase
+    internal sealed class QslNotOperator : QslOperatorBase
     {
         public override string Type => "operator";
         public override string Name => "!";

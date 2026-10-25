@@ -8,7 +8,7 @@ using QSL.Core.Runtime.Operators;
 
 namespace QSL.Core.Runtime.Evaluators
 {
-    public sealed class QslUnaryEvaluator :
+    internal  sealed class QslUnaryEvaluator :
         QslRegistryItem,
         IQslEvaluator
     {

@@ -4,7 +4,7 @@ using QSL.Core.Runtime.Context;
 
 namespace QSL.Core.Runtime.Operators
 {
-    public sealed class QslOrOperator : QslOperatorBase
+    internal sealed class QslOrOperator : QslOperatorBase
     {
         public override string Type => "operator";
         public override string Name => "||";

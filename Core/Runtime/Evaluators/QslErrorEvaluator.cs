@@ -7,7 +7,7 @@ using QSL.Core.Runtime.Context;
 
 namespace QSL.Core.Runtime.Evaluators
 {
-    public sealed class QslErrorEvaluator : QslRegistryItem, IQslEvaluator
+    internal  sealed class QslErrorEvaluator : QslRegistryItem, IQslEvaluator
     {
         public override string Type => "evaluator";
 

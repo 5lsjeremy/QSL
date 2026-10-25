@@ -4,7 +4,7 @@ using System.Text;
 
 namespace QSL.Core.Lexer
 {
-    public sealed class QslTokenizer
+    internal sealed class QslTokenizer
     {
         private readonly string _source;
         private int _pos;

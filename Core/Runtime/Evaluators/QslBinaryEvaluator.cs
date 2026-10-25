@@ -10,7 +10,7 @@ using QSL.Core.Runtime.Operators;
 
 namespace QSL.Core.Runtime.Evaluators
 {
-    public sealed class QslBinaryEvaluator :
+    internal  sealed class QslBinaryEvaluator :
         QslRegistryItem,
         IQslEvaluator
     {

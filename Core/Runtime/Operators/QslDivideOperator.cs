@@ -1,10 +1,10 @@
-using QSL.Core.Provenance;
+﻿using QSL.Core.Provenance;
 using QSL.Core.Runtime.Context;
 using QSL.Core.Runtime.Helpers;
 
 namespace QSL.Core.Runtime.Operators
 {
-    public sealed class QslDivideOperator :
+    internal sealed class QslDivideOperator :
         QslOperatorBase
     {
         public override string Name =>

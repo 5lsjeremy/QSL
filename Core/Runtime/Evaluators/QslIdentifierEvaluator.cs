@@ -7,7 +7,7 @@ using QSL.Core.Runtime.Context;
 
 namespace QSL.Core.Runtime.Evaluators
 {
-    public sealed class QslIdentifierEvaluator :
+    internal  sealed class QslIdentifierEvaluator :
         QslRegistryItem,
         IQslEvaluator
     {

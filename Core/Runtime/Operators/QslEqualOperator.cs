@@ -3,7 +3,7 @@ using QSL.Core.Runtime.Helpers;
 
 namespace QSL.Core.Runtime.Operators
 {
-    public sealed class QslEqualOperator :
+    internal sealed class QslEqualOperator :
         QslOperatorBase
     {
         public override string Name =>

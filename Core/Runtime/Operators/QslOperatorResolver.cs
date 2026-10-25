@@ -5,7 +5,7 @@ using QSL.Core.Lexer;
 
 namespace QSL.Core.Runtime.Operators
 {
-    public static class QslOperatorResolver
+    internal static class QslOperatorResolver
     {
         private static readonly Dictionary<
             QslTokenKind,
