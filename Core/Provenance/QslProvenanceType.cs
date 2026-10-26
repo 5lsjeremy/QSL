@@ -5,8 +5,7 @@ namespace QSL.Core.Provenance
         Info, Warning, Error,
         Parse, Tokenize, Evaluate, Execute,
         DescriptorApply, CapabilityApply,
-        Semantic, Belief, Trust, Memory,
-        Temporal, Prediction, System, Routing,
+        Semantic, System, 
         Merge, Context, BlockCreate, BlockProcess
     }
 
@@ -14,10 +13,6 @@ namespace QSL.Core.Provenance
     {
         QslSyntax,
         QslRuntime,
-        WildsSemantic,
-        WildsTemporal,
-        WildsMemory,
-        WildsPrediction,
         System,
         Evaluation,
         Capability

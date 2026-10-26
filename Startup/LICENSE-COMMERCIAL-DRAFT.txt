@@ -1,0 +1,21 @@
+QSL RUNTIME COMMERCIAL LICENSE - DRAFT FOR LEGAL REVIEW
+
+Copyright (c) 2026 TethraSolutions, LLC. All rights reserved.
+
+This draft is provided as a commercialization placeholder and is not final legal advice.
+It must be reviewed and approved by qualified counsel before public distribution.
+
+Intended commercial terms to formalize:
+
+1. A valid purchaser may use QSL Runtime in the purchaser's own applications, games,
+   simulations, and internal tools, including commercial products.
+2. A purchaser may distribute compiled applications that depend on or contain the
+   authorized QSL Runtime distribution as permitted by the final license.
+3. A purchaser may not resell, sublicense, publish, or redistribute QSL Runtime as a
+   standalone product, competing framework, source package, or developer SDK except as
+   expressly permitted by the final license.
+4. Ownership of QSL Runtime remains with TethraSolutions, LLC.
+5. The final license must define seat, organization, contractor, build-server, refund,
+   update, support, warranty, liability, termination, and marketplace-specific terms.
+
+DO NOT SHIP THIS DRAFT AS THE FINAL CUSTOMER LICENSE.

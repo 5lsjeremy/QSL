@@ -1,21 +1,105 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <!-- Runtime -->
         <TargetFramework>netstandard2.1</TargetFramework>
+
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>9.0</LangVersion>
 
+        <!-- Keep development infrastructure outside QSL runtime -->
         <DefaultItemExcludes>
             $(DefaultItemExcludes);
             QSL.Cli\**
         </DefaultItemExcludes>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <!-- Product Identity -->
+        <AssemblyName>QSL</AssemblyName>
+        <RootNamespace>QSL</RootNamespace>
+
+        <!-- Version -->
+        <Version>1.0.0</Version>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <FileVersion>1.0.0.0</FileVersion>
+
+        <!-- Package Identity -->
+        <PackageId>QSL.Runtime</PackageId>
+        <Title>QSL Runtime</Title>
+
+        <Description>
+            An embeddable runtime language for expressions and
+            host-defined behavior in .NET applications, games,
+            and simulations.
+        </Description>
+
+        <Authors>TethraSolutions, LLC</Authors>
+        <Company>TethraSolutions, LLC</Company>
+        <Copyright>Copyright © TethraSolutions, LLC. All rights reserved.</Copyright>
+
+        <!-- Package Documentation -->
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+
+        <!-- XML Documentation -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <!--
+            Public API guidance is maintained in the product documentation.
+            Suppress compiler noise for public members without inline
+            XML documentation.
+        -->
+        <NoWarn>$(NoWarn);1591</NoWarn>
+
+        <!-- Release Reproducibility -->
+        <Deterministic>true</Deterministic>
+
+        <!-- NuGet -->
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <!-- Runtime Dependencies -->
     <ItemGroup>
         <PackageReference
                 Include="System.Text.Json"
                 Version="8.0.5" />
+    </ItemGroup>
+
+    <!--
+        Customer sample source must ship as documentation/sample content,
+        but must NEVER compile into QSL.dll.
+    -->
+    <ItemGroup>
+        <Compile Remove="Startup\Samples\**\*.cs" />
+    </ItemGroup>
+
+    <!-- Commercial Package Content -->
+    <ItemGroup>
+
+        <!-- Package landing documents -->
+        <None Update="Startup\README.md"
+              Pack="true"
+              PackagePath="README.md" />
+
+        <None Update="Startup\QUICKSTART.md"
+              Pack="true"
+              PackagePath="QUICKSTART.md" />
+
+        <!-- Product documentation -->
+        <None Update="Startup\Documentation\**\*.md"
+              Pack="true"
+              PackagePath="Documentation\" />
+
+        <!-- Customer sample source -->
+        <None Include="Startup\Samples\**\*.cs"
+              Pack="true"
+              PackagePath="Samples\" />
+
+        <None Update="Startup\Samples\**\*.csproj"
+              Pack="true"
+              PackagePath="Samples\" />
+
     </ItemGroup>
 
 </Project>
