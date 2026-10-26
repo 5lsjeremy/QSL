@@ -76,30 +76,21 @@
 
     <!-- Commercial Package Content -->
     <ItemGroup>
-
-        <!-- Package landing documents -->
-        <None Update="Startup\README.md"
+        <None Include="Startup\README.md"
               Pack="true"
-              PackagePath="README.md" />
+              PackagePath="" />
 
-        <None Update="Startup\QUICKSTART.md"
+        <None Include="Startup\QUICKSTART.md"
               Pack="true"
-              PackagePath="QUICKSTART.md" />
+              PackagePath="" />
 
-        <!-- Product documentation -->
-        <None Update="Startup\Documentation\**\*.md"
+        <None Include="Startup\Documentation\**\*.md"
               Pack="true"
-              PackagePath="Documentation\" />
+              PackagePath="Documentation\%(RecursiveDir)" />
 
-        <!-- Customer sample source -->
-        <None Include="Startup\Samples\**\*.cs"
+        <None Include="Startup\Samples\*.cs"
               Pack="true"
-              PackagePath="Samples\" />
-
-        <None Update="Startup\Samples\**\*.csproj"
-              Pack="true"
-              PackagePath="Samples\" />
-
+              PackagePath="Samples" />
     </ItemGroup>
 
 </Project>
