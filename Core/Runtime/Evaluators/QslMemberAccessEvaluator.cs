@@ -7,7 +7,7 @@ using QSL.Core.Runtime.Context;
 
 namespace QSL.Core.Runtime.Evaluators
 {
-    internal  sealed class QslMemberAccessEvaluator :
+    internal sealed class QslMemberAccessEvaluator :
         QslRegistryItem,
         IQslEvaluator
     {
@@ -98,6 +98,9 @@ namespace QSL.Core.Runtime.Evaluators
             }
 
             // Plain-object property access.
+            //
+            // Native consumer-owned state has priority over
+            // attached runtime state.
             var targetType =
                 targetValue.GetType();
 
@@ -127,6 +130,23 @@ namespace QSL.Core.Runtime.Evaluators
                 );
             }
 
+            // Attached-state access.
+            //
+            // Attached state is considered only when the native
+            // consumer object does not define the requested member.
+            //
+            // The member must already have been explicitly
+            // introduced for this exact runtime object.
+            if (context.AttachedState.TryGet(
+                    targetValue,
+                    memberNode.MemberName,
+                    out var attachedValue))
+            {
+                return attachedValue;
+            }
+
+            // Unknown native and attached members retain the
+            // existing failure behavior.
             Report(
                 memberNode,
                 $"Member '{memberNode.MemberName}' not found " +

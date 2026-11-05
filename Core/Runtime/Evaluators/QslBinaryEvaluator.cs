@@ -221,128 +221,165 @@ namespace QSL.Core.Runtime.Evaluators
                 context);
         }
 
-private object? EvaluateAssignment(
-    QslBinaryNode binary,
-    QslRuntimeContext context)
-{
-    if (binary.Left is
-        QslIdentifierNode identifier)
-    {
-        var value =
-            context.Evaluate(
-                binary.Right
-            );
-
-        context.SetVariable(
-            identifier.Name,
-            value
-        );
-
-        return value;
-    }
-
-    if (binary.Left is
-        QslMemberAccessNode memberAccess)
-    {
-        var targetValue =
-            context.Evaluate(
-                memberAccess.Target
-            );
-
-        if (targetValue is null)
+        private object? EvaluateAssignment(
+            QslBinaryNode binary,
+            QslRuntimeContext context)
         {
+            if (binary.Left is
+                QslIdentifierNode identifier)
+            {
+                var value =
+                    context.Evaluate(
+                        binary.Right
+                    );
+
+                context.SetVariable(
+                    identifier.Name,
+                    value
+                );
+
+                return value;
+            }
+
+            if (binary.Left is
+                QslMemberAccessNode memberAccess)
+            {
+                var targetValue =
+                    context.Evaluate(
+                        memberAccess.Target
+                    );
+
+                if (targetValue is null)
+                {
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        Name,
+                        "Assignment member target evaluated to null."
+                    );
+
+                    return null;
+                }
+
+                // Descriptor member assignment.
+                if (targetValue is
+                    IQslDescriptor)
+                {
+                    var value =
+                        context.Evaluate(
+                            binary.Right
+                        );
+
+                    context.SetVariable(
+                        memberAccess.MemberName,
+                        value
+                    );
+
+                    return value;
+                }
+
+                var targetType =
+                    targetValue.GetType();
+
+                // Native consumer-object property assignment.
+                var property =
+                    targetType.GetProperty(
+                        memberAccess.MemberName
+                    );
+
+                if (property is not null &&
+                    property.CanWrite)
+                {
+                    var value =
+                        context.Evaluate(
+                            binary.Right
+                        );
+
+                    property.SetValue(
+                        targetValue,
+                        value,
+                        null
+                    );
+
+                    return value;
+                }
+
+                // Native consumer-object field assignment.
+                var field =
+                    targetType.GetField(
+                        memberAccess.MemberName
+                    );
+
+                if (field is not null)
+                {
+                    var value =
+                        context.Evaluate(
+                            binary.Right
+                        );
+
+                    field.SetValue(
+                        targetValue,
+                        value
+                    );
+
+                    return value;
+                }
+
+                // Attached-state assignment.
+                //
+                // QSL does not decide whether the member is semantically
+                // valid. If upstream processing caused the member to be
+                // received into AttachedState, QSL treats it as legitimate
+                // runtime state and may update it.
+                if (context.AttachedState.Contains(
+                        targetValue,
+                        memberAccess.MemberName))
+                {
+                    var value =
+                        context.Evaluate(
+                            binary.Right
+                        );
+
+                    if (context.AttachedState.TrySet(
+                            targetValue,
+                            memberAccess.MemberName,
+                            value))
+                    {
+                        return value;
+                    }
+
+                    AddProvenance(
+                        QslProvenanceType.Error,
+                        QslProvenanceCategory.Evaluation,
+                        Name,
+                        $"Attached member '{memberAccess.MemberName}' " +
+                        "could not be updated."
+                    );
+
+                    return null;
+                }
+
+                AddProvenance(
+                    QslProvenanceType.Error,
+                    QslProvenanceCategory.Evaluation,
+                    Name,
+                    $"Member '{memberAccess.MemberName}' " +
+                    "is not assignable."
+                );
+
+                return null;
+            }
+
             AddProvenance(
                 QslProvenanceType.Error,
                 QslProvenanceCategory.Evaluation,
                 Name,
-                "Assignment member target evaluated to null."
+                "Left operand of assignment must be " +
+                "an identifier or assignable member."
             );
 
             return null;
         }
-
-        if (targetValue is
-            IQslDescriptor)
-        {
-            var value =
-                context.Evaluate(
-                    binary.Right
-                );
-
-            context.SetVariable(
-                memberAccess.MemberName,
-                value
-            );
-
-            return value;
-        }
-
-        var targetType =
-            targetValue.GetType();
-
-        var property =
-            targetType.GetProperty(
-                memberAccess.MemberName
-            );
-
-        if (property is not null &&
-            property.CanWrite)
-        {
-            var value =
-                context.Evaluate(
-                    binary.Right
-                );
-
-            property.SetValue(
-                targetValue,
-                value,
-                null
-            );
-
-            return value;
-        }
-
-        var field =
-            targetType.GetField(
-                memberAccess.MemberName
-            );
-
-        if (field is not null)
-        {
-            var value =
-                context.Evaluate(
-                    binary.Right
-                );
-
-            field.SetValue(
-                targetValue,
-                value
-            );
-
-            return value;
-        }
-
-        AddProvenance(
-            QslProvenanceType.Error,
-            QslProvenanceCategory.Evaluation,
-            Name,
-            $"Member '{memberAccess.MemberName}' " +
-            "is not assignable."
-        );
-
-        return null;
-    }
-
-    AddProvenance(
-        QslProvenanceType.Error,
-        QslProvenanceCategory.Evaluation,
-        Name,
-        "Left operand of assignment must be " +
-        "an identifier or assignable member."
-    );
-
-    return null;
-}
         
         private object? EvaluateArrow(
             QslBinaryNode binary,

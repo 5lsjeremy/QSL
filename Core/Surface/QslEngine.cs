@@ -20,6 +20,53 @@ namespace QSL.Core
                 ?? throw new ArgumentNullException(
                     nameof(context));
         }
+        
+        public void BindConsumer(
+            QslConsumerBinding binding)
+        {
+            if (binding == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(binding)
+                );
+            }
+
+            _context.SetVariable(
+                binding.Name,
+                binding.Value
+            );
+        }
+
+        public bool ReceiveState(
+            object target,
+            string propertyName,
+            object? value)
+        {
+            return _context.ReceiveState(
+                target,
+                propertyName,
+                value
+            );
+        }
+
+        public bool RemoveState(
+            object target,
+            string propertyName)
+        {
+            return _context.RemoveState(
+                target,
+                propertyName
+            );
+        }
+
+        public bool RemoveState(
+            object target)
+        {
+            return _context.RemoveState(
+                target
+            );
+        }
+        
 
         public QslParseResult Parse(
             string source)

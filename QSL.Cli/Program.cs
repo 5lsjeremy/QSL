@@ -1,4 +1,5 @@
-﻿using QSL.Core;
+﻿using System.Globalization;
+using QSL.Core;
 using QSL.Core.Provenance;
 using QSL.Core.Runtime;
 using QSL.Core.Runtime.Context;
@@ -151,6 +152,30 @@ internal static class Program
                 continue;
             }
 
+            if (source.StartsWith(
+                    "state-add ",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                ReceiveState(
+                    host.Context,
+                    source
+                );
+
+                continue;
+            }
+
+            if (source.StartsWith(
+                    "state-remove ",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                RemoveState(
+                    host.Context,
+                    source
+                );
+
+                continue;
+            }
+
             Evaluate(
                 host.Engine,
                 source
@@ -160,6 +185,207 @@ internal static class Program
         Console.WriteLine(
             "QSL CLI closed."
         );
+    }
+
+    private static void ReceiveState(
+        QslRuntimeContext context,
+        string source)
+    {
+        var parts =
+            source.Split(
+                new[]
+                {
+                    ' '
+                },
+                4,
+                StringSplitOptions.RemoveEmptyEntries
+            );
+
+        if (parts.Length != 4)
+        {
+            Console.WriteLine(
+                "Usage: state-add <target> <property> <value>"
+            );
+
+            Console.WriteLine();
+            return;
+        }
+
+        var targetName =
+            parts[1];
+
+        var propertyName =
+            parts[2];
+
+        var value =
+            ParseStateValue(
+                parts[3]
+            );
+
+        var target =
+            context.ResolveIdentifier(
+                targetName
+            );
+
+        if (target is null)
+        {
+            Console.WriteLine(
+                $"Target '{targetName}' could not be resolved."
+            );
+
+            Console.WriteLine();
+            return;
+        }
+
+        var received =
+            context.ReceiveState(
+                target,
+                propertyName,
+                value
+            );
+
+        if (!received)
+        {
+            Console.WriteLine(
+                $"State '{propertyName}' already exists " +
+                $"for target '{targetName}'."
+            );
+
+            Console.WriteLine();
+            return;
+        }
+
+        Console.WriteLine(
+            $"State received: " +
+            $"{targetName}.{propertyName} = " +
+            QslValueFormatter.Format(
+                value
+            )
+        );
+
+        Console.WriteLine();
+    }
+
+    private static void RemoveState(
+        QslRuntimeContext context,
+        string source)
+    {
+        var parts =
+            source.Split(
+                new[]
+                {
+                    ' '
+                },
+                StringSplitOptions.RemoveEmptyEntries
+            );
+
+        if (parts.Length != 2 &&
+            parts.Length != 3)
+        {
+            Console.WriteLine(
+                "Usage: state-remove <target> [property]"
+            );
+
+            Console.WriteLine();
+            return;
+        }
+
+        var targetName =
+            parts[1];
+
+        var target =
+            context.ResolveIdentifier(
+                targetName
+            );
+
+        if (target is null)
+        {
+            Console.WriteLine(
+                $"Target '{targetName}' could not be resolved."
+            );
+
+            Console.WriteLine();
+            return;
+        }
+
+        if (parts.Length == 2)
+        {
+            var removed =
+                context.RemoveState(
+                    target
+                );
+
+            Console.WriteLine(
+                removed
+                    ? $"All attached state removed from '{targetName}'."
+                    : $"Target '{targetName}' has no attached state."
+            );
+
+            Console.WriteLine();
+            return;
+        }
+
+        var propertyName =
+            parts[2];
+
+        var propertyRemoved =
+            context.RemoveState(
+                target,
+                propertyName
+            );
+
+        Console.WriteLine(
+            propertyRemoved
+                ? $"State removed: {targetName}.{propertyName}"
+                : $"State '{propertyName}' does not exist " +
+                  $"for target '{targetName}'."
+        );
+
+        Console.WriteLine();
+    }
+
+    private static object? ParseStateValue(
+        string source)
+    {
+        if (string.Equals(
+                source,
+                "null",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (bool.TryParse(
+                source,
+                out var boolean))
+        {
+            return boolean;
+        }
+
+        if (double.TryParse(
+                source,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out var number))
+        {
+            return number;
+        }
+
+        if (source.Length >= 2)
+        {
+            if ((source[0] == '"' &&
+                 source[source.Length - 1] == '"') ||
+                (source[0] == '\'' &&
+                 source[source.Length - 1] == '\''))
+            {
+                return source.Substring(
+                    1,
+                    source.Length - 2
+                );
+            }
+        }
+
+        return source;
     }
 
     private static void Evaluate(
@@ -270,32 +496,53 @@ internal static class Program
     private static void WriteHelp()
     {
         Console.WriteLine();
+
         Console.WriteLine(
             "Commands:"
         );
 
         Console.WriteLine(
-            "  help        Show this help."
+            "  help                            Show this help."
         );
 
         Console.WriteLine(
-            "  state       Show current runtime variables."
+            "  state                           Show runtime variables."
         );
 
         Console.WriteLine(
-            "  provenance  Show provenance entries."
+            "  state-add <target> <property> <value>"
         );
 
         Console.WriteLine(
-            "  certify     Run the certification suite."
+            "                                  Receive attached state."
         );
 
         Console.WriteLine(
-            "  clear       Clear the console."
+            "  state-remove <target> <property>"
         );
 
         Console.WriteLine(
-            "  exit        Exit the CLI."
+            "                                  Remove attached state."
+        );
+
+        Console.WriteLine(
+            "  state-remove <target>           Remove all attached state."
+        );
+
+        Console.WriteLine(
+            "  provenance                      Show provenance entries."
+        );
+
+        Console.WriteLine(
+            "  certify                         Run certification."
+        );
+
+        Console.WriteLine(
+            "  clear                           Clear the console."
+        );
+
+        Console.WriteLine(
+            "  exit                            Exit the CLI."
         );
 
         Console.WriteLine();
@@ -305,6 +552,7 @@ internal static class Program
         QslRuntimeContext context)
     {
         Console.WriteLine();
+
         Console.WriteLine(
             "Runtime state:"
         );
@@ -343,6 +591,7 @@ internal static class Program
                 .GetAll();
 
         Console.WriteLine();
+
         Console.WriteLine(
             "Provenance entries: " +
             entries.Count
