@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 internal sealed class QslCertificationSuite
 {
@@ -32,6 +32,20 @@ internal sealed class QslCertificationReport
 
     [JsonPropertyName("failed")]
     public int Failed { get; set; }
+
+    [JsonPropertyName("statementTotal")]
+    public int StatementTotal { get; set; }
+
+    [JsonPropertyName("statementPassed")]
+    public int StatementPassed { get; set; }
+
+    [JsonPropertyName("statementFailed")]
+    public int StatementFailed { get; set; }
+
+    [JsonPropertyName("runtimeStateCertification")]
+    public QslRuntimeStateCertificationReport
+        RuntimeStateCertification { get; set; } =
+            new();
 
     [JsonPropertyName("results")]
     public List<QslCertificationResult> Results { get; set; } =

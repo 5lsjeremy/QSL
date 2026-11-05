@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using QSL.Core;
 using QSL.Core.Provenance;
 
@@ -75,9 +75,6 @@ internal static class CertificationRunner
             return 2;
         }
 
-        var host =
-            QslCliHost.Create();
-
         var report =
             new QslCertificationReport();
 
@@ -99,87 +96,68 @@ internal static class CertificationRunner
         );
 
         Console.WriteLine(
-            "Tests: " +
+            "Statement tests: " +
             suite.Tests.Count
         );
 
         Console.WriteLine();
 
-        for (
-            var index = 0;
-            index < suite.Tests.Count;
-            index++)
-        {
-            var test =
-                suite.Tests[index];
-
-            var result =
-                ExecuteTest(
-                    host.Engine,
-                    test
-                );
-
-            report.Results.Add(
-                result
-            );
-
-            if (result.Passed)
-            {
-                report.Passed++;
-            }
-            else
-            {
-                report.Failed++;
-            }
-
-            Console.Write(
-                result.Passed
-                    ? "."
-                    : "F"
-            );
-
-            if ((index + 1) % 50 == 0)
-            {
-                Console.WriteLine();
-            }
-        }
-
-        if (suite.Tests.Count % 50 != 0)
-        {
-            Console.WriteLine();
-        }
-
-        report.Total =
-            report.Results.Count;
+        RunStatementCertification(
+            suite,
+            report
+        );
 
         Console.WriteLine();
         Console.WriteLine(
-            "========================================"
+            "Runtime-state tests: 15"
         );
 
-        Console.WriteLine(
-            "Total:  " +
-            report.Total
+        report.RuntimeStateCertification =
+            RuntimeStateCertificationRunner.Run();
+
+        WriteRuntimeProgress(
+            report.RuntimeStateCertification
         );
 
-        Console.WriteLine(
-            "Passed: " +
-            report.Passed
+        report.StatementTotal =
+            report.Results.Count;
+
+        report.StatementPassed =
+            report.Results.Count(
+                result => result.Passed
+            );
+
+        report.StatementFailed =
+            report.StatementTotal -
+            report.StatementPassed;
+
+        report.Total =
+            report.StatementTotal +
+            report.RuntimeStateCertification.Total;
+
+        report.Passed =
+            report.StatementPassed +
+            report.RuntimeStateCertification.Passed;
+
+        report.Failed =
+            report.StatementFailed +
+            report.RuntimeStateCertification.Failed;
+
+        WriteSummary(
+            report
         );
 
-        Console.WriteLine(
-            "Failed: " +
-            report.Failed
-        );
-
-        Console.WriteLine(
-            "========================================"
-        );
-
-        if (report.Failed > 0)
+        if (report.StatementFailed > 0)
         {
-            WriteFailures(
+            WriteStatementFailures(
                 report.Results
+            );
+        }
+
+        if (report.RuntimeStateCertification.Failed > 0)
+        {
+            WriteRuntimeFailures(
+                report.RuntimeStateCertification.Results
             );
         }
 
@@ -234,7 +212,68 @@ internal static class CertificationRunner
             : 1;
     }
 
-    private static QslCertificationResult ExecuteTest(
+    private static void RunStatementCertification(
+        QslCertificationSuite suite,
+        QslCertificationReport report)
+    {
+        var host =
+            QslCliHost.Create();
+
+        for (
+            var index = 0;
+            index < suite.Tests.Count;
+            index++)
+        {
+            var test =
+                suite.Tests[index];
+
+            var result =
+                ExecuteStatementTest(
+                    host.Engine,
+                    test
+                );
+
+            report.Results.Add(
+                result
+            );
+
+            Console.Write(
+                result.Passed
+                    ? "."
+                    : "F"
+            );
+
+            if ((index + 1) % 50 == 0)
+            {
+                Console.WriteLine();
+            }
+        }
+
+        if (suite.Tests.Count % 50 != 0)
+        {
+            Console.WriteLine();
+        }
+    }
+
+    private static void WriteRuntimeProgress(
+        QslRuntimeStateCertificationReport report)
+    {
+        for (
+            var index = 0;
+            index < report.Results.Count;
+            index++)
+        {
+            Console.Write(
+                report.Results[index].Passed
+                    ? "."
+                    : "F"
+            );
+        }
+
+        Console.WriteLine();
+    }
+
+    private static QslCertificationResult ExecuteStatementTest(
         QslEngine engine,
         QslCertificationTest test)
     {
@@ -305,34 +344,24 @@ internal static class CertificationRunner
         {
             Category =
                 test.Category,
-
             Statement =
                 test.Statement,
-
             Expected =
                 test.Expected,
-
             Output =
                 output,
-
             Passed =
                 passed,
-
             Succeeded =
                 processingResult.Succeeded,
-
             ParseFailed =
                 processingResult.ParseFailed,
-
             EvaluationFailed =
                 processingResult.EvaluationFailed,
-
             ParserDiagnostics =
                 parserDiagnostics,
-
             RuntimeDiagnostics =
                 runtimeDiagnostics,
-
             Exception =
                 processingResult
                     .Exception?
@@ -352,13 +381,72 @@ internal static class CertificationRunner
             entry.Message;
     }
 
-    private static void WriteFailures(
-        IReadOnlyList<QslCertificationResult>
-            results)
+    private static void WriteSummary(
+        QslCertificationReport report)
     {
         Console.WriteLine();
         Console.WriteLine(
-            "Failures:"
+            "========================================"
+        );
+
+        Console.WriteLine(
+            "Statement total:  " +
+            report.StatementTotal
+        );
+
+        Console.WriteLine(
+            "Statement passed: " +
+            report.StatementPassed
+        );
+
+        Console.WriteLine(
+            "Statement failed: " +
+            report.StatementFailed
+        );
+
+        Console.WriteLine();
+        Console.WriteLine(
+            "Runtime total:    " +
+            report.RuntimeStateCertification.Total
+        );
+
+        Console.WriteLine(
+            "Runtime passed:   " +
+            report.RuntimeStateCertification.Passed
+        );
+
+        Console.WriteLine(
+            "Runtime failed:   " +
+            report.RuntimeStateCertification.Failed
+        );
+
+        Console.WriteLine();
+        Console.WriteLine(
+            "Total:            " +
+            report.Total
+        );
+
+        Console.WriteLine(
+            "Passed:           " +
+            report.Passed
+        );
+
+        Console.WriteLine(
+            "Failed:           " +
+            report.Failed
+        );
+
+        Console.WriteLine(
+            "========================================"
+        );
+    }
+
+    private static void WriteStatementFailures(
+        IReadOnlyList<QslCertificationResult> results)
+    {
+        Console.WriteLine();
+        Console.WriteLine(
+            "Statement failures:"
         );
 
         foreach (var result in results)
@@ -414,6 +502,43 @@ internal static class CertificationRunner
                     diagnostic
                 );
             }
+
+            if (!string.IsNullOrEmpty(
+                    result.Exception))
+            {
+                Console.WriteLine(
+                    "  Exception: " +
+                    result.Exception
+                );
+            }
+        }
+    }
+
+    private static void WriteRuntimeFailures(
+        IReadOnlyList<QslRuntimeStateCertificationResult> results)
+    {
+        Console.WriteLine();
+        Console.WriteLine(
+            "Runtime-state failures:"
+        );
+
+        foreach (var result in results)
+        {
+            if (result.Passed)
+            {
+                continue;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine(
+                "[Runtime State] " +
+                result.Name
+            );
+
+            Console.WriteLine(
+                "  Details: " +
+                result.Details
+            );
 
             if (!string.IsNullOrEmpty(
                     result.Exception))
