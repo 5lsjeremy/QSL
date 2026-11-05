@@ -6,6 +6,7 @@ using QSL.Core.Parser;
 using QSL.Core.Provenance;
 using QSL.Core.Runtime;
 using QSL.Core.Runtime.Context;
+using QSL.Core.Runtime.Packages;
 
 namespace QSL.Core
 {
@@ -16,11 +17,17 @@ namespace QSL.Core
         public QslEngine(
             QslRuntimeContext context)
         {
-            _context = context
+            _context =
+                context
                 ?? throw new ArgumentNullException(
-                    nameof(context));
+                    nameof(context)
+                );
         }
-        
+
+        /// <summary>
+        /// Makes an exact consumer-owned runtime object available
+        /// through its supplied QSL identifier.
+        /// </summary>
         public void BindConsumer(
             QslConsumerBinding binding)
         {
@@ -37,6 +44,46 @@ namespace QSL.Core
             );
         }
 
+        /// <summary>
+        /// Removes a consumer binding only when the identifier
+        /// still references the exact object supplied by the
+        /// binding.
+        ///
+        /// Successfully unbinding a consumer also retires all
+        /// attached state associated with that exact object.
+        /// </summary>
+        public bool UnbindConsumer(
+            QslConsumerBinding binding)
+        {
+            if (binding == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(binding)
+                );
+            }
+
+            var unbound =
+                _context.RemoveVariable(
+                    binding.Name,
+                    binding.Value
+                );
+
+            if (!unbound)
+            {
+                return false;
+            }
+
+            _context.RemoveState(
+                binding.Value
+            );
+
+            return true;
+        }
+
+        /// <summary>
+        /// Receives one approved state instruction for the exact
+        /// target object.
+        /// </summary>
         public bool ReceiveState(
             object target,
             string propertyName,
@@ -49,6 +96,125 @@ namespace QSL.Core
             );
         }
 
+        /// <summary>
+        /// Receives a package of approved state instructions for
+        /// one exact target object.
+        ///
+        /// Every package property retains the same non-destructive
+        /// receipt semantics as the single-state overload.
+        ///
+        /// The return value reports how many properties were newly
+        /// received.
+        /// </summary>
+        public int ReceiveState(
+            QslStatePackage package)
+        {
+            if (package == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(package)
+                );
+            }
+
+            var received =
+                0;
+
+            foreach (var property in
+                     package.Properties)
+            {
+                if (ReceiveState(
+                        package.Target,
+                        property.Key,
+                        property.Value))
+                {
+                    received++;
+                }
+            }
+
+            package.RecordApplied(
+                received
+            );
+
+            return received;
+        }
+
+        /// <summary>
+        /// Applies an approved update to existing attached state.
+        ///
+        /// This operation does not introduce missing state.
+        /// </summary>
+        public bool UpdateState(
+            object target,
+            string propertyName,
+            object? value)
+        {
+            return _context.UpdateState(
+                target,
+                propertyName,
+                value
+            );
+        }
+
+        /// <summary>
+        /// Applies resolved state values that Wilds has already
+        /// calculated through its decay processing.
+        ///
+        /// Nonzero values update existing attached state.
+        /// Numeric zero removes existing state when RemoveAtZero
+        /// is enabled by the package.
+        ///
+        /// Decay cannot introduce missing state.
+        /// </summary>
+        public int ReceiveDecay(
+            QslDecayPackage package)
+        {
+            if (package == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(package)
+                );
+            }
+
+            var affected =
+                0;
+
+            foreach (var property in
+                     package.Properties)
+            {
+                if (package.RemoveAtZero &&
+                    IsZero(
+                        property.Value))
+                {
+                    if (RemoveState(
+                            package.Target,
+                            property.Key))
+                    {
+                        affected++;
+                    }
+
+                    continue;
+                }
+
+                if (UpdateState(
+                        package.Target,
+                        property.Key,
+                        property.Value))
+                {
+                    affected++;
+                }
+            }
+
+            package.RecordApplied(
+                affected
+            );
+
+            return affected;
+        }
+
+        /// <summary>
+        /// Removes one attached-state property from the exact
+        /// target object.
+        /// </summary>
         public bool RemoveState(
             object target,
             string propertyName)
@@ -59,6 +225,10 @@ namespace QSL.Core
             );
         }
 
+        /// <summary>
+        /// Removes all attached state associated with the exact
+        /// target object.
+        /// </summary>
         public bool RemoveState(
             object target)
         {
@@ -66,26 +236,40 @@ namespace QSL.Core
                 target
             );
         }
-        
+
+        /// <summary>
+        /// Clears active runtime variables, metadata, and attached
+        /// state while preserving the configured runtime registry.
+        /// </summary>
+        public void Clear()
+        {
+            _context.Clear();
+        }
 
         public QslParseResult Parse(
             string source)
         {
             var tokenizer =
-                new QslTokenizer(source);
+                new QslTokenizer(
+                    source
+                );
 
             var tokens =
                 tokenizer.Tokenize();
 
             var parser =
-                new QslParser(tokens);
+                new QslParser(
+                    tokens
+                );
 
             var ast =
                 parser.ParseExpression();
 
             return new QslParseResult(
                 ast,
-                CopyDiagnostics(parser.Errors)
+                CopyDiagnostics(
+                    parser.Errors
+                )
             );
         }
 
@@ -93,14 +277,17 @@ namespace QSL.Core
             string source)
         {
             var provenanceStart =
-                QslRuntime.Instance.ProvenanceBus
+                QslRuntime.Instance
+                    .ProvenanceBus
                     .GetAll()
                     .Count;
 
             try
             {
                 var parseResult =
-                    Parse(source);
+                    Parse(
+                        source
+                    );
 
                 if (parseResult.HasDiagnostics)
                 {
@@ -148,6 +335,49 @@ namespace QSL.Core
             }
         }
 
+        private static bool IsZero(
+            object? value)
+        {
+            switch (value)
+            {
+                case byte number:
+                    return number == 0;
+
+                case sbyte number:
+                    return number == 0;
+
+                case short number:
+                    return number == 0;
+
+                case ushort number:
+                    return number == 0;
+
+                case int number:
+                    return number == 0;
+
+                case uint number:
+                    return number == 0;
+
+                case long number:
+                    return number == 0;
+
+                case ulong number:
+                    return number == 0;
+
+                case float number:
+                    return number == 0.0f;
+
+                case double number:
+                    return number == 0.0;
+
+                case decimal number:
+                    return number == 0.0m;
+
+                default:
+                    return false;
+            }
+        }
+
         private static IReadOnlyList<string>
             CopyDiagnostics(
                 IReadOnlyList<string> diagnostics)
@@ -178,11 +408,15 @@ namespace QSL.Core
                 int startIndex)
         {
             var allEntries =
-                QslRuntime.Instance.ProvenanceBus
+                QslRuntime.Instance
+                    .ProvenanceBus
                     .GetAll();
 
             if (startIndex < 0)
-                startIndex = 0;
+            {
+                startIndex =
+                    0;
+            }
 
             if (startIndex >= allEntries.Count)
             {
@@ -203,7 +437,9 @@ namespace QSL.Core
                 if (entry.EntryType ==
                     QslProvenanceType.Error)
                 {
-                    diagnostics.Add(entry);
+                    diagnostics.Add(
+                        entry
+                    );
                 }
             }
 
@@ -227,11 +463,14 @@ namespace QSL.Core
             IQslNode ast,
             IReadOnlyList<string> diagnostics)
         {
-            Ast = ast
+            Ast =
+                ast
                 ?? throw new ArgumentNullException(
-                    nameof(ast));
+                    nameof(ast)
+                );
 
-            Diagnostics = diagnostics
+            Diagnostics =
+                diagnostics
                 ?? Array.Empty<string>();
         }
     }
@@ -272,8 +511,11 @@ namespace QSL.Core
                 runtimeDiagnostics,
             Exception? exception)
         {
-            Ast = ast;
-            Value = value;
+            Ast =
+                ast;
+
+            Value =
+                value;
 
             ParserDiagnostics =
                 parserDiagnostics
@@ -283,7 +525,8 @@ namespace QSL.Core
                 runtimeDiagnostics
                 ?? Array.Empty<QslProvenanceEntry>();
 
-            Exception = exception;
+            Exception =
+                exception;
         }
 
         public static QslProcessingResult Success(

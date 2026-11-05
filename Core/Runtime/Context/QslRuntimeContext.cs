@@ -96,6 +96,69 @@ namespace QSL.Core.Runtime.Context
         }
 
         /// <summary>
+        /// Applies an approved update to existing attached state.
+        ///
+        /// This operation does not introduce missing state.
+        /// Authorization and transition calculation belong
+        /// upstream.
+        /// </summary>
+        public bool UpdateState(
+            object target,
+            string propertyName,
+            object? value)
+        {
+            if (target == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(target)
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(
+                    propertyName))
+            {
+                throw new ArgumentException(
+                    "Property name cannot be empty.",
+                    nameof(propertyName)
+                );
+            }
+
+            var updated =
+                AttachedState.TrySet(
+                    target,
+                    propertyName,
+                    value
+                );
+
+            if (!updated)
+            {
+                return false;
+            }
+
+            AddProvenance(
+                QslProvenanceType.Context,
+                QslProvenanceCategory.QslRuntime,
+                nameof(QslRuntimeContext),
+                $"Attached state updated: {propertyName}",
+                new Dictionary<string, object>
+                {
+                    ["targetType"] =
+                        target.GetType().FullName
+                        ?? target.GetType().Name,
+
+                    ["property"] =
+                        propertyName,
+
+                    ["value"] =
+                        value
+                        ?? "<null>"
+                }
+            );
+
+            return true;
+        }
+
+        /// <summary>
         /// Receives an approved instruction to remove one attached
         /// state property from the exact target object.
         /// </summary>
@@ -192,6 +255,13 @@ namespace QSL.Core.Runtime.Context
         public object? Evaluate(
             IQslNode node)
         {
+            if (node == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(node)
+                );
+            }
+
             var key =
                 node.Kind;
 
@@ -271,12 +341,13 @@ namespace QSL.Core.Runtime.Context
 
             return null;
         }
-        
+
         /// <summary>
         /// Clears runtime variables, metadata, and attached state.
         ///
-        /// The runtime registry remains intact. Registered evaluators,
-        /// functions, descriptors, and capabilities are not removed.
+        /// The runtime registry remains intact. Registered
+        /// evaluators, functions, descriptors, and capabilities
+        /// are not removed.
         /// </summary>
         public void Clear()
         {

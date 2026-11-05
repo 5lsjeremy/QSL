@@ -1,6 +1,6 @@
 # QSL Runtime Quick Start
 
-This guide creates a runtime, exposes host state, registers host behavior, evaluates QSL, and inspects the result.
+This guide creates a runtime, binds an ordinary consumer-owned object, supplies runtime state, evaluates QSL, and inspects the result.
 
 ## 1. Create the Runtime
 
@@ -16,87 +16,101 @@ var context = new QslRuntimeContext(registry);
 var engine = new QslEngine(context);
 ```
 
-## 2. Define Host State with a Descriptor
+## 2. Bind a Consumer-Owned Object
+
+The object does not implement a QSL contract:
 
 ```csharp
-using QSL.Abstractions.Runtime;
-using QSL.Core.Base;
-using QSL.Core.Runtime.Context;
-
-public sealed class PlayerDescriptor : QslRegistryItem, IQslDescriptor
+public sealed class Player
 {
-    public override string Name => "Player";
-    public override string Type => "descriptor";
-
-    public void Apply(QslRuntimeContext context)
-    {
-        context.SetVariable("health", 100);
-        context.SetVariable("mana", 50);
-    }
+    public double Health { get; set; } = 50.0;
 }
+
+var player = new Player();
+
+var binding = new QslConsumerBinding(
+    "player",
+    "Player",
+    player);
+
+engine.BindConsumer(binding);
 ```
 
-## 3. Define Host Behavior with a Function
+`Name` is the QSL-visible identifier, `Type` is consumer-owned classification, and `Value` is the exact runtime object.
 
-The following illustrates the integration shape. Production functions should validate domain input and report failures through provenance.
+QSL can immediately read native public members:
+
+```qsl
+player.Health
+```
+
+## 3. Receive Runtime State
+
+Attached state is not invented by member access or assignment. It becomes available only after it is received through the runtime state surface.
 
 ```csharp
-using System;
-using QSL.Abstractions.Runtime;
-using QSL.Core.Base;
-using QSL.Core.Provenance;
-using QSL.Core.Runtime.Context;
+engine.ReceiveState(
+    player,
+    "Curiosity",
+    7.0);
+```
 
-public sealed class HealFunction : QslRegistryItem, IQslFunction
-{
-    public override string Name => "heal";
-    public override string Type => "function";
+Now QSL can evaluate:
 
-    public object? Invoke(object?[] args, QslRuntimeContext context)
+```qsl
+player.Curiosity
+```
+
+and can update that already-existing attached state:
+
+```qsl
+player.Curiosity = player.Curiosity + 3
+```
+
+## 4. Receive a State Package
+
+Multiple already-approved values can be batched:
+
+```csharp
+var package = new QslStatePackage(
+    player,
+    new Dictionary<string, object?>
     {
-        if (args.Length != 1)
-        {
-            AddProvenance(
-                QslProvenanceType.Error,
-                QslProvenanceCategory.Evaluation,
-                Name,
-                "heal requires exactly one argument.");
-            return null;
-        }
+        ["Interest"] = 5.0,
+        ["Suspicion"] = 2.0
+    });
 
-        var amount = Convert.ToInt32(args[0]);
-        var health = Convert.ToInt32(context.ResolveIdentifier("health") ?? 0);
-        var updated = health + amount;
-
-        context.SetVariable("health", updated);
-        return updated;
-    }
-}
+var received = engine.ReceiveState(package);
 ```
 
-## 4. Register and Apply Host Extensions
+Package receipt uses the same non-destructive semantics as single-state receipt. The returned count is the number of newly received properties.
+
+## 5. Apply Resolved Maintenance Values
+
+A decay package contains values that have already been resolved upstream. QSL does not calculate the decay.
 
 ```csharp
-var player = new PlayerDescriptor();
-var heal = new HealFunction();
+var decay = new QslDecayPackage(
+    player,
+    new Dictionary<string, object?>
+    {
+        ["Interest"] = 2.5,
+        ["Suspicion"] = 0.0
+    });
 
-registry.RegisterType(player);
-registry.RegisterType(heal);
-
-player.Apply(context);
+var affected = engine.ReceiveDecay(decay);
 ```
 
-Registration makes an extension available to the registry. Applying a descriptor or capability installs its context-specific state or behavior.
+With `RemoveAtZero` enabled, `Interest` is updated to `2.5` and `Suspicion` is removed. A decay package cannot introduce missing attached state.
 
-## 5. Evaluate
+## 6. Evaluate
 
 ```csharp
-var result = engine.Evaluate("heal(10)");
+var result = engine.Evaluate(
+    "player.Health = player.Health - player.Interest");
 ```
 
-The descriptor initializes `health` to `100`; the function adds `10` and returns `110`.
-
-## 6. Inspect the Result
+## 7. Inspect the Result
 
 ```csharp
 if (result.Succeeded)
@@ -116,12 +130,41 @@ else
 }
 ```
 
+## 8. Retire Runtime Vocabulary
+
+Remove one attached member:
+
+```csharp
+engine.RemoveState(
+    player,
+    "Curiosity");
+```
+
+Remove all attached state for the exact object:
+
+```csharp
+engine.RemoveState(player);
+```
+
+Unbind the exact consumer object and retire its attached state:
+
+```csharp
+engine.UnbindConsumer(binding);
+```
+
+Or clear active runtime variables, metadata, and attached state while preserving the configured registry:
+
+```csharp
+engine.Clear();
+```
+
 ## Mental Model
 
 1. Create the registry, context, and engine.
-2. Register host extensions.
-3. Apply descriptors or capabilities to the target context.
-4. Evaluate source through `QslEngine`.
-5. Inspect the structured processing result.
+2. Bind exact consumer-owned objects through `QslEngine`.
+3. Receive already-approved/resolved runtime state, individually or in packages.
+4. Evaluate ordinary QSL against native and attached vocabulary.
+5. Update, remove, decay, unbind, or clear state through the public engine lifecycle.
+6. Inspect structured processing results and provenance.
 
-The language belongs to QSL. The domain belongs to the host.
+The language belongs to QSL. The domain, semantic meaning, validation, and upstream calculation belong to the host.

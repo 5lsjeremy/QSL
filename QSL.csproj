@@ -76,13 +76,6 @@
 
     <!-- Commercial Package Content -->
     <ItemGroup>
-        <None Include="Startup\README.md"
-              Pack="true"
-              PackagePath="" />
-
-        <None Include="Startup\QUICKSTART.md"
-              Pack="true"
-              PackagePath="" />
 
         <None Include="Startup\Documentation\**\*.md"
               Pack="true"

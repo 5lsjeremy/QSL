@@ -6,7 +6,6 @@ This draft is provided as a commercialization placeholder and is not final legal
 It must be reviewed and approved by qualified counsel before public distribution.
 
 Intended commercial terms to formalize:
-
 1. A valid purchaser may use QSL Runtime in the purchaser's own applications, games,
    simulations, and internal tools, including commercial products.
 2. A purchaser may distribute compiled applications that depend on or contain the

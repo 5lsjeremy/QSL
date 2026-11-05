@@ -2,13 +2,13 @@
 
 **Runtime expressions and host-defined intent for .NET applications, games, and simulations.**
 
-QSL is an embeddable runtime language from **TethraSolutions, LLC**. It parses and evaluates expressions against application-owned state, objects, functions, descriptors, and capabilities.
+QSL is an embeddable runtime language from **TethraSolutions, LLC**. It parses and evaluates expressions against application-owned state, objects, functions, descriptors, capabilities, and runtime-attached vocabulary.
 
 Your application owns the domain. QSL owns the language and evaluation runtime.
 
 ## Why QSL?
 
-A host can expose its own vocabulary:
+A host can expose its own vocabulary without teaching QSL the domain:
 
 ```qsl
 health < 30 ? heal(20) : patrol()
@@ -16,15 +16,79 @@ health < 30 ? heal(20) : patrol()
 
 QSL does not define `health`, `heal`, or `patrol`. The host does.
 
-Another host can expose a different domain without modifying QSL:
+QSL can also bind an exact consumer-owned object and work with its native members:
 
 ```qsl
-soil.moisture < 0.25 ? irrigate(field) : wait()
+player.Health
+player.Health = player.Health + action.Amount
 ```
+
+Runtime state can be attached later without changing the consumer object's CLR type. Until that state is received through the runtime surface, the member is not part of QSL-visible vocabulary.
+
+```text
+action.Amount
+    -> unresolved
+
+ReceiveState(action, "Amount", 10)
+    -> action.Amount is now QSL-visible
+```
+
+## Runtime Vocabulary
+
+QSL supports two complementary forms of object state:
+
+- **Native state**: public CLR properties or fields already exposed by the exact consumer-owned object.
+- **Attached state**: runtime state explicitly received for that exact object and retained by `QslAttachedStateStore`.
+
+Ordinary QSL member syntax is shared across both:
+
+```qsl
+player.Health
+player.Curiosity
+action.Amount
+```
+
+QSL does not assign domain meaning to those names. The host determines which consumer objects and resolved state values enter the runtime.
+
+## Public Integration Surface
+
+`QslEngine` is the primary public gateway. In addition to parsing and evaluation, it supports the runtime vocabulary lifecycle:
+
+- `BindConsumer(QslConsumerBinding)`
+- `UnbindConsumer(QslConsumerBinding)`
+- `ReceiveState(object, string, object?)`
+- `ReceiveState(QslStatePackage)`
+- `UpdateState(object, string, object?)`
+- `ReceiveDecay(QslDecayPackage)`
+- `RemoveState(object, string)`
+- `RemoveState(object)`
+- `Clear()`
+- `Parse(string)`
+- `Evaluate(string)`
+
+`QslConsumerBinding` supplies a QSL-visible name, a consumer-owned type classification, and the exact runtime object reference.
+
+Packages carry already-resolved values for an exact target. QSL does not reproduce the upstream reasoning that produced those values.
+
+## State Packages
+
+`IQslPackage` and `QslPackageBase` define the common package shape:
+
+```text
+Target
+Properties
+QSL object identity / provenance
+```
+
+`QslStatePackage` batches approved state receipt. Existing attached state remains non-destructive on receipt.
+
+`QslDecayPackage` carries already-resolved maintenance values. Nonzero values update existing attached state; numeric zero can retire existing state when `RemoveAtZero` is enabled. QSL does not calculate decay.
+
+Packages inherit QSL identity and provenance so package creation and application can be traced independently from the per-property state lifecycle recorded by the runtime context.
 
 ## Processing Surface
 
-`RegisterDefaultEvaluators()` installs support for these AST structures:
+`RegisterDefaultEvaluators()` installs support for:
 
 - Literal
 - Identifier
@@ -38,41 +102,23 @@ soil.moisture < 0.25 ? irrigate(field) : wait()
 - Member access
 - Ternary
 
-Examples:
-
-```qsl
-10
-health
-!active
-health + regeneration
-heal(10)
-player.health
-health < 30 ? heal(20) : patrol()
-{ heal(10); patrol(); }
-"Health: $(health)"
-```
-
-See [PROCESSING.md](Documentation/PROCESSING.md) for composition details.
+Member access resolves supported special QSL values, native CLR properties/fields, and received attached state. Assignment can mutate writable native members or already-existing attached state.
 
 ## Core Architecture
 
 ```text
-QSL Source
+External host / integration
+    -> consumer bindings
+    -> resolved state / packages
     -> QslEngine
-    -> tokenizer and parser
-    -> AST
     -> QslRuntimeContext
+    -> native + attached vocabulary
+    -> tokenizer / parser / AST
     -> evaluator dispatch
-    -> host state and behavior
     -> QslProcessingResult
 ```
 
-- `QslEngine` is the public parsing and evaluation gateway.
-- `QslRuntimeRegistry` defines the evaluators and host extensions available to QSL.
-- `QslRuntimeContext` provides the state and resolution environment for an evaluation.
-- Descriptors and capabilities apply host-owned data or behavior to a context.
-- Functions expose host-owned operations.
-- Evaluators interpret AST nodes against the current context.
+The host owns semantic validation and meaning. QSL accepts the vocabulary made available through its supported runtime surface and computes against it.
 
 ## Quick Start
 
@@ -88,59 +134,15 @@ var context = new QslRuntimeContext(registry);
 var engine = new QslEngine(context);
 
 var result = engine.Evaluate("10 + 20 * 3");
-
-if (result.Succeeded)
-    Console.WriteLine(result.Value);
 ```
 
-See [QUICKSTART.md](Documentation/QUICKSTART.md) for a host extension example.
-
-## Host Extension Surfaces
-
-### Functions
-
-Functions expose operations such as:
-
-```qsl
-heal(10)
-```
-
-### Descriptors
-
-Descriptors implement `IQslDescriptor` and apply host-owned state to a `QslRuntimeContext`.
-
-```csharp
-public void Apply(QslRuntimeContext context)
-{
-    context.SetVariable("health", 100);
-}
-```
-
-### Capabilities
-
-Capabilities implement `IQslCapability` and apply a coherent group of host-owned behavior to a context. A host might provide a `PhysicsCapability`, economy capability, navigation capability, or another domain-specific subsystem.
-
-### Evaluators
-
-Evaluators implement `IQslEvaluator`:
-
-```csharp
-object? Evaluate(IQslNode node, QslRuntimeContext context);
-```
-
-Most consumers use the standard evaluator set. Advanced integrations can register an evaluator for a specific `QslNodeKind`.
+See [QUICKSTART.md](QUICKSTART.md) for consumer binding and runtime-state examples.
 
 ## Diagnostics
 
-`QslEngine.Evaluate` returns a `QslProcessingResult` containing:
+`QslEngine.Evaluate` returns a `QslProcessingResult` containing `Value`, parser diagnostics, runtime diagnostics, any exception, and success/failure state. Parser diagnostics remain separate from provenance-backed runtime diagnostics.
 
-- `Value`
-- `ParserDiagnostics`
-- `RuntimeDiagnostics`
-- `Exception`
-- `Succeeded`
-
-Parser diagnostics remain separate from runtime diagnostics. Runtime evaluation errors are collected through provenance.
+Package lifecycle events and runtime-state lifecycle operations also emit provenance through the existing QSL provenance model.
 
 ## Requirements
 
@@ -158,10 +160,10 @@ Parser diagnostics remain separate from runtime diagnostics. Runtime evaluation 
 
 ### Host Integration
 
+- [Runtime Objects and State](Documentation/RUNTIME_OBJECTS.md)
 - [Functions](Documentation/FUNCTIONS.md)
 - [Descriptors](Documentation/DESCRIPTORS.md)
 - [Capabilities](Documentation/CAPABILITIES.md)
-- [Runtime Objects](Documentation/RUNTIME_OBJECTS.md)
 - [Diagnostics and Provenance](Documentation/DIAGNOSTICS.md)
 
 ### Language and Advanced Integration
